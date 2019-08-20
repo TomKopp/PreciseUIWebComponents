@@ -1,8 +1,10 @@
 import { customelementprefix } from '../../../package.json';
 import { noop, debounce, booleanAttribute2Boolean } from '../../utility';
+import { defineElement } from '../../decorators';
 
 
 //* Class **********************************************************************
+@defineElement(`${customelementprefix}-card`)
 export class Test extends HTMLElement {
   // _internals: any;
 //* Constructor ****************************************************************
@@ -85,5 +87,3 @@ export class Test extends HTMLElement {
 
   // formResetCallback() {} // if custom elem is "form-associative = true"
 }
-
-customElements.define(`${customelementprefix}-test`, Test);

@@ -2,9 +2,11 @@ import { customelementprefix } from '../../../package.json';
 import { InputType, AutocompleteValue } from '../../types';
 import { noop, debounce, booleanAttribute2Boolean } from '../../utility';
 import { BaseElement } from '../Base/base-element';
+import { defineElement } from '../../decorators';
 
 
 //* Class **********************************************************************
+@defineElement(`${customelementprefix}-card`)
 export class TextField extends BaseElement {
 //* Constructor ****************************************************************
 

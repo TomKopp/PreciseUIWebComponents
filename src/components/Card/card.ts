@@ -1,7 +1,9 @@
 import { customelementprefix } from '../../../package.json';
 import { BaseElement } from '../Base/base-element';
+import { defineElement } from '../../decorators';
 
 //* Class *********************************************************************
+@defineElement(`${customelementprefix}-card`)
 export class Card extends BaseElement {
 //* Constructor ***************************************************************
 
@@ -57,5 +59,3 @@ ${this.layoutCSS}
 //* Life Cycle Callbacks ******************************************************
 
 }
-
-customElements.define(`${customelementprefix}-card`, Card);
