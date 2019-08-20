@@ -3564,10 +3564,15 @@ textarea {
       super(...args);
 
       _defineProperty(this, "direction", 'column');
+
+      _defineProperty(this, "layout", '');
     }
 
-    //! API change, was: orientation: 'horizontal' | 'vertical' = 'vertical';
-    //* Template ******************************************************************
+    get layoutCSS() {
+      return (this.layout.match(/[0-9]/gu) || []).map((val, key) => `.card > :nth-child(${key + 1}) {flex:${val} 1 auto;}`).join('\n');
+    } //* Template ******************************************************************
+
+
     renderTemplate() {
       this.template.innerHTML = `${this.renderStyles()}
 <section class="card">
@@ -3587,12 +3592,13 @@ textarea {
   justify-content: flex-start;
   padding: 1rem;
 }
+${this.layoutCSS}
 </style>`;
     } //* Obervers/Handlers *********************************************************
 
 
     static get observedAttributes() {
-      return ['direction'];
+      return ['direction', 'layout'];
     }
 
     attributeChangedCallback(attrName, oldValue, newValue) {

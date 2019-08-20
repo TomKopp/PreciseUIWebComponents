@@ -9,6 +9,12 @@ export class Card extends BaseElement {
 
 //* Properties/Getter/Setter **************************************************
   public direction: 'row' | 'column' = 'column'; //! API change, was: orientation: 'horizontal' | 'vertical' = 'vertical';
+  public layout: string = '';
+  protected get layoutCSS () {
+    return (this.layout.match(/\d/gu) || [])
+      .map((val, key) => `.card > :nth-child(${key + 1}) {flex:${val} 1 auto;}`)
+      .join('\n');
+  }
 
 
 
@@ -32,13 +38,14 @@ export class Card extends BaseElement {
   justify-content: flex-start;
   padding: 1rem;
 }
+${this.layoutCSS}
 </style>`
   }
 
 
 
 //* Obervers/Handlers *********************************************************
-  static get observedAttributes() { return ['direction']; }
+  static get observedAttributes() { return ['direction', 'layout']; }
 
   protected attributeChangedCallback(attrName: string, oldValue: any, newValue: string) {
     //@ts-ignore-next-line
