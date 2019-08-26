@@ -2999,8 +2999,7 @@ var preciseuiwc = (function (exports) {
         }
       };
 
-      const callNow = immediate && !timeout; //@ts-ignore-next-line
-
+      const callNow = immediate && !timeout;
       clearTimeout(timeout); //@ts-ignore-next-line
 
       timeout = setTimeout(later, wait);
@@ -3113,12 +3112,30 @@ var preciseuiwc = (function (exports) {
 
   }
 
-  const defineElement = (name, options) => classConstructor => {
-    customElements.define(name, classConstructor, options);
-    return classConstructor;
+  // type Constructor<T> = { new(...args: any[]): {} };
+  // // From the TC39 Decorators proposal
+  // interface ClassElement {
+  //   kind: 'field'|'method';
+  //   key: PropertyKey;
+  //   placement: 'static'|'prototype'|'own';
+  //   initializer?: Function;
+  //   extras?: ClassElement[];
+  //   finisher?: <T extends { new(...args: any[]): {} }>(classConstructor: T) => any;
+  //   descriptor?: PropertyDescriptor;
+  // }
+  // // From the TC39 Decorators proposal
+  // interface ClassDescriptor {
+  //   kind: 'class';
+  //   elements: ClassElement[];
+  //   finisher?: <T extends { new(...args: any[]): {} }>(classConstructor: T) => any;
+  // }
+  const defineElement = (name, options) => classDescriptor => {
+    classDescriptor.finisher = classConstructor => customElements.define(name, classConstructor, options);
+
+    return classDescriptor;
   };
 
-  let TextField = _decorate([defineElement(`${customelementprefix}-card`)], function (_initialize, _BaseElement) {
+  let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], function (_initialize, _BaseElement) {
     class TextField extends _BaseElement {
       constructor(...args) {
         super(...args);
@@ -3648,7 +3665,7 @@ textarea {
         key: "renderTextarea",
 
         value() {
-          return () => `<textarea id=form-elem ${typeof this._multiline === 'number' ? `row=${this._multiline}` : ''}></textarea>`;
+          return () => `<textarea id=form-elem ${this.renderAttributes()} ${typeof this._multiline === 'number' ? `row=${this._multiline}` : ''}></textarea>`;
         }
 
       }, {
@@ -3701,9 +3718,8 @@ textarea {
       }]
     };
   }, BaseElement);
-  customElements.define(`${customelementprefix}-textfield`, TextField);
 
-  let Test = _decorate([defineElement(`${customelementprefix}-card`)], function (_initialize, _HTMLElement) {
+  let Test = _decorate([defineElement(`${customelementprefix}-test`)], function (_initialize, _HTMLElement) {
     class Test extends _HTMLElement {
       // _internals: any;
       //* Constructor ****************************************************************
