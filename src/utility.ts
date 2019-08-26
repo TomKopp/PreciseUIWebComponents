@@ -21,7 +21,6 @@ export const debounce = (func: any, wait: number, immediate: boolean = false) =>
 
 		const callNow = immediate && !timeout;
 
-    //@ts-ignore-next-line
     clearTimeout(timeout);
     //@ts-ignore-next-line
     timeout = setTimeout(later, wait);
