@@ -4,7 +4,7 @@ import { defineElement } from '../../decorators';
 
 
 //* Class **********************************************************************
-@defineElement(`${customelementprefix}-card`)
+@defineElement(`${customelementprefix}-test`)
 export class Test extends HTMLElement {
   // _internals: any;
 //* Constructor ****************************************************************
