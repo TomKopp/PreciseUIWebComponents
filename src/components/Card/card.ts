@@ -1,6 +1,6 @@
 import { customelementprefix } from '../../../package.json';
 import { BaseElement } from '../Base/base-element';
-import { defineElement } from '../../decorators';
+import { defineElement, property } from '../../decorators';
 
 //* Class *********************************************************************
 @defineElement(`${customelementprefix}-card`)
@@ -17,6 +17,8 @@ export class Card extends BaseElement {
       .map((val, key) => `.card > :nth-child(${key + 1}) {flex:${val} 1 auto;}`)
       .join('\n');
   }
+  //@ts-ignore-next-line
+  @property({ optTest: 'optTest'}) test = 'test';
 
 
 

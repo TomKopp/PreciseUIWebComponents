@@ -24,8 +24,15 @@ export const defineElement = (name: string, options?: Object) =>
     return classDescriptor;
   }
 
-export const defineElementLegacy = (name: string, options?: Object) =>
-  <T extends { new(...args: any[]): {} }>(classConstructor: T) => {
-    customElements.define(name, classConstructor, options);
-    return classConstructor;
+//TODO - unnecessary?
+// export const defineElementLegacy = (name: string, options?: Object) =>
+//   <T extends { new(...args: any[]): {} }>(classConstructor: T) => {
+//     customElements.define(name, classConstructor, options);
+//     return classConstructor;
+//   }
+
+export const property = (options?: any) =>
+  (classDescriptorOrPrototype: any) => {
+    let myDescriptor = { opts: options };
+    return myDescriptor;
   }

@@ -3134,6 +3134,18 @@ const defineElement = (name, options) => classDescriptor => {
   classDescriptor.finisher = classConstructor => customElements.define(name, classConstructor, options);
 
   return classDescriptor;
+}; //TODO - unnecessary?
+// export const defineElementLegacy = (name: string, options?: Object) =>
+//   <T extends { new(...args: any[]): {} }>(classConstructor: T) => {
+//     customElements.define(name, classConstructor, options);
+//     return classConstructor;
+//   }
+
+const property$1 = options => (classDescriptorOrPrototype, propertyKey) => {
+  let myDescriptor = {
+    opts: options
+  };
+  return myDescriptor;
 };
 
 let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], function (_initialize, _BaseElement) {
@@ -3940,12 +3952,24 @@ let Card = _decorate([defineElement(`${customelementprefix}-card`)], function (_
       //! API change, was: orientation: 'horizontal' | 'vertical' = 'vertical';
       function layoutCSS() {
         return (this.layout.match(/[0-9]/gu) || []).map((val, key) => `.card > :nth-child(${key + 1}) {flex:${val} 1 auto;}`).join('\n');
-      } //* Template ******************************************************************
+      } //@ts-ignore-next-line
+
+    }, {
+      kind: "field",
+      decorators: [property$1({
+        optTest: 'optTest'
+      })],
+      key: "test",
+
+      value() {
+        return 'test';
+      }
 
     }, {
       kind: "method",
       key: "renderTemplate",
-      value: function renderTemplate() {
+      value: //* Template ******************************************************************
+      function renderTemplate() {
         this.template.innerHTML = `${this.renderStyles()}
 <section class="card">
   <div class="card-header"><slot name=header></slot></div>
