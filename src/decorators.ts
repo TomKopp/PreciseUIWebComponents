@@ -1,38 +1,24 @@
-// type Constructor<T> = { new(...args: any[]): {} };
-
-// // From the TC39 Decorators proposal
-// interface ClassElement {
-//   kind: 'field'|'method';
-//   key: PropertyKey;
-//   placement: 'static'|'prototype'|'own';
-//   initializer?: Function;
-//   extras?: ClassElement[];
-//   finisher?: <T extends { new(...args: any[]): {} }>(classConstructor: T) => any;
-//   descriptor?: PropertyDescriptor;
-// }
-
-// // From the TC39 Decorators proposal
-// interface ClassDescriptor {
-//   kind: 'class';
-//   elements: ClassElement[];
-//   finisher?: <T extends { new(...args: any[]): {} }>(classConstructor: T) => any;
-// }
+import { PropertyDeclaration } from './types';
+import { BaseElement } from './components/Base/base-element';
 
 export const defineElement = (name: string, options?: Object) =>
-  (classDescriptor: any) => {
+  function (classDescriptor: any) {
     classDescriptor.finisher = <T extends { new(...args: any[]): {} }>(classConstructor: T) => customElements.define(name, classConstructor, options);
     return classDescriptor;
   }
 
-//TODO - unnecessary?
-// export const defineElementLegacy = (name: string, options?: Object) =>
-//   <T extends { new(...args: any[]): {} }>(classConstructor: T) => {
-//     customElements.define(name, classConstructor, options);
-//     return classConstructor;
-//   }
-
-export const property = (options?: any) =>
-  (classDescriptorOrPrototype: any) => {
-    let myDescriptor = { opts: options };
-    return myDescriptor;
+export function property(propertyDeclaration?: PropertyDeclaration) {
+  // Second parameter (name) just to please TypeScript...
+  return function(propertyDescriptor: any, name?: PropertyKey): any {
+    const value = propertyDescriptor.initializer();
+    // propertyDescriptor.initializer = function initializer() {
+    //   console.log('initializer: ', this);
+    //   return value;
+    // }
+    propertyDescriptor.finisher = function finisher(classConstructor: typeof BaseElement) {
+      classConstructor.addClassProperty(propertyDescriptor.key, propertyDeclaration);
+      // console.log('classConstructor: ', classConstructor, ' value: ', value);
+    }
+    return propertyDescriptor;
   }
+}

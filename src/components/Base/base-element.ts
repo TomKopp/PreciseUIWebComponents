@@ -1,10 +1,12 @@
+import { PropertyDeclarationMap, PropertyDeclaration } from '../../types';
+
 //* Class *********************************************************************
 export abstract class BaseElement extends HTMLElement {
-//* Constructor ***************************************************************
+  //* Constructor *************************************************************
   constructor() {
     /**
      * If you define a constructor, always call super() first to apply the right property chain!
-     * This is specific to CE and required by the spec.
+     * This is specific to custom elements and required by the spec.
      */
     super();
 
@@ -18,7 +20,8 @@ export abstract class BaseElement extends HTMLElement {
 
 
 
-//* Properties/Getter/Setter **************************************************
+  //* Properties/Getter/Setter ************************************************
+  private static _classProperties: PropertyDeclarationMap = new Map();
   protected renderRoot: any;
 
   protected _template: HTMLTemplateElement | undefined;
@@ -33,29 +36,42 @@ export abstract class BaseElement extends HTMLElement {
   //   return this._styleElement;
   // }
 
+  static addClassProperty(propertyKey: PropertyKey, propertyDeclaration?: PropertyDeclaration) {
+    this._classProperties.set(propertyKey, Object.assign({ observe: true, reflect: false }, propertyDeclaration));
+  }
 
 
-//* Template ******************************************************************
+
+  //* Template ****************************************************************
   protected renderTemplate() { /* this.template.innerHTML = ''; */ }
 
 
 
-//* Obervers/Handlers *********************************************************
+  //* Obervers/Handlers *******************************************************
   /**
    * Specify observed attributes names to be notified in attributeChangedCallback
    */
-  // static get observedAttributes() { return []; }
+  static get observedAttributes() {
+    const ret: string[] = [];
+    this._classProperties.forEach((val: PropertyDeclaration, key: PropertyKey) => {
+        if (val.observe && typeof key === 'string') ret.push(key);
+      });
+    return ret;
+  }
 
   /**
    * Called when an observed attribute has been added, removed, updated, or replaced.
    * Also called for initial values when an element is created by the parser, or upgraded.
    * Note: only attributes listed in the observedAttributes property will receive this callback.
    */
-  // protected attributeChangedCallback(attrName: string, oldValue: any, newValue: string) {}
+  protected attributeChangedCallback(attrName: string, oldValue: string|null, newValue: string|null) {
+    // @ts-ignore-next-line
+    if (oldValue !== newValue) this[attrName] = newValue;
+  }
 
 
 
-//* Life Cycle Callbacks ******************************************************
+  //* Life Cycle Callbacks ****************************************************
   /**
    * Invoked each time the custom element is appended into a document-connected
    * element. This will happen each time the node is moved, and may happen before

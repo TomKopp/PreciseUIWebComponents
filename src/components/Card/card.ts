@@ -5,24 +5,29 @@ import { defineElement, property } from '../../decorators';
 //* Class *********************************************************************
 @defineElement(`${customelementprefix}-card`)
 export class Card extends BaseElement {
-//* Constructor ***************************************************************
+  //* Constructor *************************************************************
+  constructor() {
+    super();
+  }
 
 
-
-//* Properties/Getter/Setter **************************************************
+  //* Properties/Getter/Setter ************************************************
+  @property()
   public direction: 'row' | 'column' = 'column'; //! API change, was: orientation: 'horizontal' | 'vertical' = 'vertical';
+  @property()
   public layout: string = '';
   protected get layoutCSS () {
     return (this.layout.match(/\d/gu) || [])
       .map((val, key) => `.card > :nth-child(${key + 1}) {flex:${val} 1 auto;}`)
       .join('\n');
   }
-  //@ts-ignore-next-line
-  @property({ optTest: 'optTest'}) test = 'test';
+
+  @property({ reflect: true })
+  test = 'test';
 
 
 
-//* Template ******************************************************************
+  //* Template ****************************************************************
   protected renderTemplate() {
     this.template.innerHTML = `${this.renderStyles()}
 <section class="card">
@@ -48,16 +53,16 @@ ${this.layoutCSS}
 
 
 
-//* Obervers/Handlers *********************************************************
-  static get observedAttributes() { return ['direction', 'layout']; }
+  //* Obervers/Handlers *******************************************************
+  // static get observedAttributes() { return ['direction', 'layout']; }
 
-  protected attributeChangedCallback(attrName: string, oldValue: any, newValue: string) {
-    //@ts-ignore-next-line
-    this[attrName] = newValue;
-  }
+  // protected attributeChangedCallback(attrName: string, oldValue: string|null, newValue: string|null) {
+  //   // @ts-ignore-next-line
+  //   this[attrName] = newValue;
+  // }
 
 
 
-//* Life Cycle Callbacks ******************************************************
+  //* Life Cycle Callbacks ****************************************************
 
 }
