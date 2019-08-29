@@ -1,4 +1,5 @@
 import babel from 'rollup-plugin-babel';
+import cleanup from 'rollup-plugin-cleanup';
 import commonjs from 'rollup-plugin-commonjs';
 import cpy from 'rollup-plugin-cpy';
 import del from 'rollup-plugin-delete';
@@ -37,6 +38,9 @@ export default {
 
     // Compile TypeScript/JavaScript files
     babel({ extensions, include: ['src/**/*'], exclude: 'node_modules/**' }),
+
+    // Remove comments, trim trailing spaces, compact empty lines, and normalize line endings
+    cleanup({extensions: ['ts', 'js']}),
 
     // Rollup plugin to easily copy files and folders
     cpy({ files: ['dist/index.esm.js', 'dist/index.esm.js.map'], dest: 'public/' })
