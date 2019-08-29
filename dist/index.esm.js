@@ -447,176 +447,86 @@ function _optionalCallableProperty(obj, name) {
 
 const customelementprefix="pui";
 
-const booleanAttribute2Boolean = val => Boolean(val === '' ? true : val); // I hate TypeScript and at this point it is just annoying.
-
+const booleanAttribute2Boolean = val => Boolean(val === '' ? true : val);
 const debounce = (func, wait, immediate = false) => {
   if (typeof func !== 'function') {
     throw new TypeError('Expected a function');
   }
-
   let timeout;
   return function debounced(...args) {
     const later = () => {
       timeout = undefined;
-
       if (!immediate) {
-        //@ts-ignore-next-line
         func.apply(this, args);
       }
     };
-
     const callNow = immediate && !timeout;
-    clearTimeout(timeout); //@ts-ignore-next-line
-
+    clearTimeout(timeout);
     timeout = setTimeout(later, wait);
-
     if (callNow) {
-      //@ts-ignore-next-line
       func.apply(this, args);
     }
   };
 };
 
-//* Class *********************************************************************
 class BaseElement extends HTMLElement {
-  //* Constructor *************************************************************
   constructor() {
-    /**
-     * If you define a constructor, always call super() first to apply the right property chain!
-     * This is specific to custom elements and required by the spec.
-     */
     super();
-
     _defineProperty(this, "renderRoot", void 0);
-
     _defineProperty(this, "_template", void 0);
-
     this.attachShadow({
       mode: 'open'
     });
-
     if (!this.shadowRoot) {
       this.renderRoot = this;
       throw new Error('No ShadowRoot');
     }
-
     this.renderRoot = this.shadowRoot;
-  } //* Properties/Getter/Setter ************************************************
-
-
+  }
   get template() {
     if (!this._template) this._template = document.createElement('template');
     return this._template;
-  } // protected _styleElement: HTMLStyleElement | undefined;
-  // get styleElement(): HTMLStyleElement {
-  //   if (!this._styleElement) this._styleElement = document.createElement('style');
-  //   return this._styleElement;
-  // }
-
-
+  }
   static addClassProperty(propertyKey, propertyDeclaration) {
     this._classProperties.set(propertyKey, Object.assign({
       observe: true,
       reflect: false
     }, propertyDeclaration));
-  } //* Template ****************************************************************
-
-
+  }
   renderTemplate() {}
-  /* this.template.innerHTML = ''; */
-  //* Obervers/Handlers *******************************************************
-
-  /**
-   * Specify observed attributes names to be notified in attributeChangedCallback
-   */
-
-
   static get observedAttributes() {
     const ret = [];
-
     this._classProperties.forEach((val, key) => {
       if (val.observe && typeof key === 'string') ret.push(key);
     });
-
     return ret;
   }
-  /**
-   * Called when an observed attribute has been added, removed, updated, or replaced.
-   * Also called for initial values when an element is created by the parser, or upgraded.
-   * Note: only attributes listed in the observedAttributes property will receive this callback.
-   */
-
-
   attributeChangedCallback(attrName, oldValue, newValue) {
-    // @ts-ignore-next-line
     if (oldValue !== newValue) this[attrName] = newValue;
-  } //* Life Cycle Callbacks ****************************************************
-
-  /**
-   * Invoked each time the custom element is appended into a document-connected
-   * element. This will happen each time the node is moved, and may happen before
-   * the element's contents have been fully parsed.
-   *
-   * Useful for running setup code, such as fetching resources or rendering.
-   * Generally, you should try to delay work until this time.
-   */
-
-
+  }
   connectedCallback() {
     if (!this.isConnected) return;
     this.renderTemplate();
     this.preCommitHook();
     requestAnimationFrame(this.commit.bind(this));
   }
-  /**
-   * Invoked each time the custom element is disconnected from the document's DOM.
-   * Useful for running clean up code.
-   */
-  // protected disconnectedCallback() {}
-
-  /**
-   * Invoked each time the custom element is moved to a new document.
-   */
-  // protected adoptedCallback() {}
-
-  /**
-   * Invoked if custom elem is "form-associative = true".
-   */
-  // protected formResetCallback() {}
-
-
   preCommitHook() {}
-
   commit() {
-    /*
-    Does not clone the DocumentFragment, instead rips it from the template and
-    places it into the render node. This way the element will retain the references
-    of objects within the template.
-    */
     this.renderRoot.appendChild(this.template.content);
   }
-
 }
-
 _defineProperty(BaseElement, "_classProperties", new Map());
 
 const defineElement = (name, options) => function (classDescriptor) {
   classDescriptor.finisher = classConstructor => customElements.define(name, classConstructor, options);
-
   return classDescriptor;
 };
 function property(propertyDeclaration) {
-  // Second parameter (name) just to please TypeScript...
   return function (propertyDescriptor, name) {
-    const value = propertyDescriptor.initializer(); // propertyDescriptor.initializer = function initializer() {
-    //   console.log('initializer: ', this);
-    //   return value;
-    // }
-
+    const value = propertyDescriptor.initializer();
     propertyDescriptor.finisher = function finisher(classConstructor) {
-      classConstructor.addClassProperty(propertyDescriptor.key, propertyDeclaration); // console.log('classConstructor: ', classConstructor, ' value: ', value);
+      classConstructor.addClassProperty(propertyDescriptor.key, propertyDeclaration);
     };
-
     return propertyDescriptor;
   };
 }
@@ -625,12 +535,9 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
   class TextField extends _BaseElement {
     constructor(...args) {
       super(...args);
-
       _initialize(this);
     }
-
   }
-
   return {
     F: TextField,
     d: [{
@@ -640,8 +547,7 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "get",
       key: "formElement",
-      value: //* Constructor ****************************************************************
-      //* Properties - Getter/Setter *************************************************
+      value:
       function formElement() {
         if (!this._formElement) this._formElement = this.template.content.querySelector('#form-elem');
         return this._formElement;
@@ -656,16 +562,13 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
       value: function labelElement() {
         if (!this._labelElem) this._labelElem = this.template.content.querySelector('label');
         return this._labelElem;
-      } // General Input attr
-
+      }
     }, {
       kind: "field",
       key: "_autocomplete",
-
       value() {
         return false;
       }
-
     }, {
       kind: "get",
       key: "autocomplete",
@@ -682,11 +585,9 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "field",
       key: "_autofocus",
-
       value() {
         return false;
       }
-
     }, {
       kind: "get",
       key: "autofocus",
@@ -703,11 +604,9 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "field",
       key: "_disabled",
-
       value() {
         return false;
       }
-
     }, {
       kind: "get",
       key: "disabled",
@@ -724,34 +623,25 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "field",
       key: "_form",
-
       value() {
         return null;
       }
-
     }, {
       kind: "field",
       key: "_list",
-
       value() {
         return null;
       }
-
     }, {
       kind: "field",
       key: "_name",
-
       value() {
         return '';
       }
-
     }, {
       kind: "get",
       key: "name",
-      value: // get form() { return this.formElem.getAttribute('form') || ''; }
-      // set form(val: string) { this.formElem.setAttribute('form', val); }
-      // get list() { return this.formElem.getAttribute('list') || ''; }
-      // set list(val: string) { this.formElem.setAttribute('list', val)}
+      value:
       function name() {
         return this._name;
       }
@@ -764,11 +654,9 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "field",
       key: "_readOnly",
-
       value() {
         return false;
       }
-
     }, {
       kind: "get",
       key: "readOnly",
@@ -784,11 +672,9 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "field",
       key: "_required",
-
       value() {
         return false;
       }
-
     }, {
       kind: "get",
       key: "required",
@@ -804,11 +690,9 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "field",
       key: "_type",
-
       value() {
         return 'text';
       }
-
     }, {
       kind: "get",
       key: "type",
@@ -824,11 +708,9 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "field",
       key: "_value",
-
       value() {
         return '';
       }
-
     }, {
       kind: "get",
       key: "value",
@@ -845,11 +727,9 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "field",
       key: "_placeholder",
-
       value() {
         return '';
       }
-
     }, {
       kind: "get",
       key: "placeholder",
@@ -865,11 +745,9 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "field",
       key: "_multiline",
-
       value() {
         return false;
       }
-
     }, {
       kind: "get",
       key: "multiline",
@@ -881,48 +759,37 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
       key: "multiline",
       value: function multiline(val) {
         this._multiline = val;
-      } // PreciseUI
-
+      }
     }, {
       kind: "field",
       key: "borderless",
-
       value() {
         return false;
       }
-
     }, {
       kind: "field",
       key: "className",
-
       value() {
         return '';
       }
-
     }, {
       kind: "field",
       key: "clearable",
-
       value() {
         return false;
       }
-
     }, {
       kind: "field",
       key: "defaultValue",
-
       value() {
         return '';
       }
-
     }, {
       kind: "field",
       key: "error",
-
       value() {
         return '';
       }
-
     }, {
       kind: "field",
       key: "icon",
@@ -930,68 +797,44 @@ let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], f
     }, {
       kind: "field",
       key: "info",
-
       value() {
         return '';
       }
-
     }, {
       kind: "field",
       key: "label",
-
       value() {
         return '';
       }
-
     }, {
       kind: "field",
       key: "maxLength",
-
       value() {
         return -1;
       }
-
     }, {
       kind: "field",
       key: "minLenght",
-
       value() {
         return -1;
       }
-
     }, {
       kind: "field",
       key: "prefix",
-
       value() {
         return '';
       }
-
     }, {
       kind: "field",
       key: "resizable",
-
       value() {
         return 'none';
       }
-
     }, {
       kind: "method",
       key: "renderStyle",
-      value: // error message below input
-      // Sets an optional default icon (if any) to use when no error or clearable is given. - we have slots
-      // info instead of error
+      value:
       //! API change, was: boolean | 'auto' | 'vertical' | 'horizontal' = false
-      // style: string = ''; // not possible as string, has to be a CSSStyleDeclaration for this exact property name
-      // suffix: string = '';
-      // theme: string = ''; //TODO figure out how to use themes within wc
-      // Eventhandler
-      // onBlur: CallableFunction = noop;
-      // onChange: CallableFunction = noop;
-      // onClear: CallableFunction = noop;
-      // onFocus: CallableFunction = noop;
-      // onInput: CallableFunction = noop;
-      //* Template *******************************************************************
       function renderStyle() {
         return `<style>
 .text-field-container {
@@ -1125,39 +968,31 @@ textarea {
     }, {
       kind: "field",
       key: "renderIcon",
-
       value() {
         return () => this.icon ? this.icon : `Icon/ErrorIco`;
       }
-
     }, {
       kind: "field",
       key: "renderAttributes",
-
       value() {
         return () => TextField.observedAttributes.map(val => val in this ? `${val}="${this[val]}"` : '').join(' ');
       }
-
     }, {
       kind: "field",
       key: "renderInput",
-
       value() {
         return () => `<input id=form-elem ${this.renderAttributes()} />`;
       }
-
     }, {
       kind: "field",
       key: "renderTextarea",
-
       value() {
         return () => `<textarea id=form-elem ${this.renderAttributes()} ${typeof this._multiline === 'number' ? `row=${this._multiline}` : ''}></textarea>`;
       }
-
     }, {
       kind: "method",
       key: "renderTemplate",
-      value: //@ts-ignore-next-line
+      value:
       function renderTemplate() {
         this.template.innerHTML = `${this.renderStyle()}
 <div class=text-field-container>
@@ -1171,30 +1006,26 @@ textarea {
     <span id=suffix><slot name=suffix>Suffix</slot></span>
   </div>
 </div>`;
-      } //* Obervers/Handlers **********************************************************
-
+      }
     }, {
       kind: "get",
       static: true,
       key: "observedAttributes",
       value: function observedAttributes() {
         return ['autocomplete', 'autofocus', 'disabled', 'form', 'list', 'multiline', 'name', 'placeholder', 'readOnly', 'required', 'type', 'value'];
-      } //@ts-ignore-next-line
-
+      }
     }, {
       kind: "method",
       key: "attributeChangedCallback",
       value: function attributeChangedCallback(attrName, oldValue, newValue) {
         if (attrName in this) this[attrName] = newValue;
-      } //@ts-ignore-next-line
-
+      }
     }, {
       kind: "method",
       key: "forwardProperty",
       value: function forwardProperty(targetElement, key, val) {
         if (targetElement && key in targetElement) targetElement[key] = val;
-      } //* Life Cycle Callbacks *******************************************************
-
+      }
     }, {
       kind: "method",
       key: "preCommitHook",
@@ -1205,229 +1036,29 @@ textarea {
   };
 }, BaseElement);
 
-let Test = _decorate([defineElement(`${customelementprefix}-test`)], function (_initialize, _HTMLElement) {
-  class Test extends _HTMLElement {
-    // _internals: any;
-    //* Constructor ****************************************************************
-    constructor() {
-      super();
-
-      _initialize(this);
-
-      this.attachShadow({
-        mode: 'open'
-      });
-
-      if (!this.shadowRoot) {
-        throw new Error('No ShadowRoot');
-      } //this._internals = this.attachInternals();
-
-    } //* Properties/Getter/Setter ***************************************************
-    // disconnectedCallback() {}
-    // adoptedCallback() {}
-    // formResetCallback() {} // if custom elem is "form-associative = true"
-
-
-  }
-
-  return {
-    F: Test,
-    d: [{
-      kind: "field",
-      key: "_disabled",
-
-      value() {
-        return false;
-      }
-
-    }, {
-      kind: "get",
-      key: "disabled",
-      value: function disabled() {
-        return this._disabled;
-      }
-    }, {
-      kind: "set",
-      key: "disabled",
-      value: function disabled(val) {
-        this._disabled = booleanAttribute2Boolean(val);
-        this.forwardProperty(this.formElement, 'disabled', this._disabled);
-      }
-    }, {
-      kind: "field",
-      key: "_multiline",
-
-      value() {
-        return false;
-      }
-
-    }, {
-      kind: "get",
-      key: "multiline",
-      value: function multiline() {
-        return this._multiline;
-      }
-    }, {
-      kind: "set",
-      key: "multiline",
-      value: function multiline(val) {
-        this._multiline = val;
-      }
-    }, {
-      kind: "field",
-      key: "_value",
-
-      value() {
-        return '';
-      }
-
-    }, {
-      kind: "get",
-      key: "value",
-      value: function value() {
-        return this._value;
-      }
-    }, {
-      kind: "set",
-      key: "value",
-      value: function value(val) {
-        this._value = val;
-      }
-    }, {
-      kind: "field",
-      key: "_template",
-      value: void 0
-    }, {
-      kind: "get",
-      key: "template",
-      value: function template() {
-        if (!this._template) this._template = document.createElement('template');
-        return this._template;
-      }
-    }, {
-      kind: "field",
-      key: "_formElement",
-      value: void 0
-    }, {
-      kind: "get",
-      key: "formElement",
-      value: function formElement() {
-        if (!this._formElement) this._formElement = this.template.content.querySelector('#form-elem');
-        return this._formElement;
-      } //* Template *******************************************************************
-
-    }, {
-      kind: "field",
-      key: "renderTemplate",
-
-      value() {
-        return () => {
-          this.template.innerHTML = `${this._multiline ? this.textarea() : this.input()}`;
-        };
-      }
-
-    }, {
-      kind: "field",
-      key: "renderAttributes",
-
-      value() {
-        return () => Test.observedAttributes.map(val => val in this ? `${val}=${this[val]}` : '').join(' ');
-      }
-
-    }, {
-      kind: "field",
-      key: "input",
-
-      value() {
-        return () => `<input id=form-elem ${this.renderAttributes()} />`;
-      }
-
-    }, {
-      kind: "field",
-      key: "textarea",
-
-      value() {
-        return () => `<textarea id=form-elem ${this.renderAttributes()} ${typeof this._multiline === 'number' ? `row=${this._multiline}` : ''}></textarea>`;
-      }
-
-    }, {
-      kind: "get",
-      static: true,
-      key: "observedAttributes",
-      value: //* Obervers/Handlers **********************************************************
-      function observedAttributes() {
-        return ['disabled', 'multiline', 'value'];
-      } //@ts-ignore-next-line
-
-    }, {
-      kind: "method",
-      key: "attributeChangedCallback",
-      value: function attributeChangedCallback(attrName, oldValue, newValue) {
-        if (attrName in this) this[attrName] = newValue;
-      } //@ts-ignore-next-line
-
-    }, {
-      kind: "method",
-      key: "forwardProperty",
-      value: function forwardProperty(targetElement, key, val) {
-        if (targetElement && key in targetElement) targetElement[key] = val;
-      } //* Life Cycle Callbacks *******************************************************
-
-    }, {
-      kind: "method",
-      key: "connectedCallback",
-      value: function connectedCallback() {
-        if (!this.isConnected) return;
-        this.renderTemplate(); // this.cloneTemplate();
-        // requestAnimationFrame(() => this.shadowRoot!.appendChild(this.template.content));
-        // this.shadowRoot!.appendChild(this.template.content.cloneNode(true));
-
-        this.formElement.addEventListener('change', debounce(() => this.value = this.formElement.value, 50));
-        this.shadowRoot.appendChild(this.template.content);
-      }
-    }]
-  };
-}, HTMLElement);
-
 let Card = _decorate([defineElement(`${customelementprefix}-card`)], function (_initialize, _BaseElement) {
   class Card extends _BaseElement {
-    //* Constructor *************************************************************
     constructor() {
       super();
-
       _initialize(this);
-    } //* Properties/Getter/Setter ************************************************
-    //* Obervers/Handlers *******************************************************
-    // static get observedAttributes() { return ['direction', 'layout']; }
-    // protected attributeChangedCallback(attrName: string, oldValue: string|null, newValue: string|null) {
-    //   // @ts-ignore-next-line
-    //   this[attrName] = newValue;
-    // }
-    //* Life Cycle Callbacks ****************************************************
-
-
+    }
   }
-
   return {
     F: Card,
     d: [{
       kind: "field",
       decorators: [property()],
       key: "direction",
-
       value() {
         return 'column';
       }
-
     }, {
       kind: "field",
       decorators: [property()],
       key: "layout",
-
       value() {
         return '';
       }
-
     }, {
       kind: "get",
       key: "layoutCSS",
@@ -1440,15 +1071,13 @@ let Card = _decorate([defineElement(`${customelementprefix}-card`)], function (_
         reflect: true
       })],
       key: "test",
-
       value() {
         return 'test';
       }
-
     }, {
       kind: "method",
       key: "renderTemplate",
-      value: //* Template ****************************************************************
+      value:
       function renderTemplate() {
         this.template.innerHTML = `${this.renderStyles()}
 <section class="card">
@@ -1477,5 +1106,5 @@ ${this.layoutCSS}
   };
 }, BaseElement);
 
-export { Card, Test, TextField };
+export { Card, TextField };
 //# sourceMappingURL=index.esm.js.map
