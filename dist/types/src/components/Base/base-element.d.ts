@@ -2,11 +2,14 @@ import { PropertyDeclaration } from '../../types';
 export declare abstract class BaseElement extends HTMLElement {
     constructor();
     private static _classProperties;
-    protected renderRoot: any;
+    static addClassProperty(propertyKey: PropertyKey, propertyDeclaration?: PropertyDeclaration): void;
+    protected renderRoot: ShadowRoot | HTMLElement;
     protected _template: HTMLTemplateElement | undefined;
     readonly template: HTMLTemplateElement;
-    static addClassProperty(propertyKey: PropertyKey, propertyDeclaration?: PropertyDeclaration): void;
-    protected renderTemplate(): void;
+    protected _styleElement: HTMLStyleElement | undefined;
+    readonly styleElement: HTMLStyleElement;
+    protected renderTemplate(): string;
+    protected renderStyle(): string;
     static readonly observedAttributes: string[];
     protected attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void;
     protected connectedCallback(): void;

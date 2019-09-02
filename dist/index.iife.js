@@ -477,6 +477,7 @@ var preciseuiwc = (function (exports) {
       super();
       _defineProperty(this, "renderRoot", void 0);
       _defineProperty(this, "_template", void 0);
+      _defineProperty(this, "_styleElement", void 0);
       this.attachShadow({
         mode: 'open'
       });
@@ -486,17 +487,26 @@ var preciseuiwc = (function (exports) {
       }
       this.renderRoot = this.shadowRoot;
     }
-    get template() {
-      if (!this._template) this._template = document.createElement('template');
-      return this._template;
-    }
     static addClassProperty(propertyKey, propertyDeclaration) {
       this._classProperties.set(propertyKey, Object.assign({
         observe: true,
         reflect: false
       }, propertyDeclaration));
     }
-    renderTemplate() {}
+    get template() {
+      if (!this._template) this._template = document.createElement('template');
+      return this._template;
+    }
+    get styleElement() {
+      if (!this._styleElement) this._styleElement = document.createElement('style');
+      return this._styleElement;
+    }
+    renderTemplate() {
+      return '';
+    }
+    renderStyle() {
+      return '';
+    }
     static get observedAttributes() {
       const ret = [];
       this._classProperties.forEach((val, key) => {
@@ -509,12 +519,14 @@ var preciseuiwc = (function (exports) {
     }
     connectedCallback() {
       if (!this.isConnected) return;
-      this.renderTemplate();
+      this.styleElement.innerHTML = this.renderStyle();
+      this.template.innerHTML = this.renderTemplate();
       this.preCommitHook();
       requestAnimationFrame(this.commit.bind(this));
     }
     preCommitHook() {}
     commit() {
+      this.renderRoot.appendChild(this.styleElement);
       this.renderRoot.appendChild(this.template.content);
     }
   }
@@ -526,7 +538,6 @@ var preciseuiwc = (function (exports) {
   };
   function property(propertyDeclaration) {
     return function (propertyDescriptor, name) {
-      const value = propertyDescriptor.initializer();
       propertyDescriptor.finisher = function finisher(classConstructor) {
         classConstructor.addClassProperty(propertyDescriptor.key, propertyDeclaration);
       };
@@ -839,7 +850,7 @@ var preciseuiwc = (function (exports) {
         value:
         //! API change, was: boolean | 'auto' | 'vertical' | 'horizontal' = false
         function renderStyle() {
-          return `<style>
+          return `
 .text-field-container {
   position: relative;
 }
@@ -965,8 +976,7 @@ textarea {
 #form-elem:focus + #description {
   color: rgb(0, 139, 208);
   /* transform: none; */
-}
-</style>`;
+}`;
         }
       }, {
         kind: "field",
@@ -997,7 +1007,7 @@ textarea {
         key: "renderTemplate",
         value:
         function renderTemplate() {
-          this.template.innerHTML = `${this.renderStyle()}
+          return `
 <div class=text-field-container>
   <div class=stack-pannel>
     <span id=prefix><slot name=prefix>Prefix</slot></span>
@@ -1041,8 +1051,8 @@ textarea {
 
   let Card = _decorate([defineElement(`${customelementprefix}-card`)], function (_initialize, _BaseElement) {
     class Card extends _BaseElement {
-      constructor() {
-        super();
+      constructor(...args) {
+        super(...args);
         _initialize(this);
       }
     }
@@ -1050,14 +1060,18 @@ textarea {
       F: Card,
       d: [{
         kind: "field",
-        decorators: [property()],
+        decorators: [property({
+          reflect: true
+        })],
         key: "direction",
         value() {
           return 'column';
         }
       }, {
         kind: "field",
-        decorators: [property()],
+        decorators: [property({
+          reflect: true
+        })],
         key: "layout",
         value() {
           return '';
@@ -1065,7 +1079,9 @@ textarea {
       }, {
         kind: "get",
         key: "layoutCSS",
-        value: function layoutCSS() {
+        value:
+        //! API change, was: orientation: 'horizontal' | 'vertical' = 'vertical';
+        function layoutCSS() {
           return (this.layout.match(/[0-9]/gu) || []).map((val, key) => `.card > :nth-child(${key + 1}) {flex:${val} 1 auto;}`).join('\n');
         }
       }, {
@@ -1082,8 +1098,7 @@ textarea {
         key: "renderTemplate",
         value:
         function renderTemplate() {
-          this.template.innerHTML = `${this.renderStyles()}
-<section class="card">
+          return `<section class="card">
   <div class="card-header"><slot name=header></slot></div>
   <div class="card-media"><slot name=media></slot></div>
   <div class="card-body"><slot name=body></slot></div>
@@ -1092,9 +1107,9 @@ textarea {
         }
       }, {
         kind: "method",
-        key: "renderStyles",
-        value: function renderStyles() {
-          return `<style>
+        key: "renderStyle",
+        value: function renderStyle() {
+          return `
 .card {
   box-sizing: border-box;
   display: flex;
@@ -1102,8 +1117,7 @@ textarea {
   justify-content: flex-start;
   padding: 1rem;
 }
-${this.layoutCSS}
-</style>`;
+${this.layoutCSS}`;
         }
       }]
     };

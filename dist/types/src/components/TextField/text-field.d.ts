@@ -39,12 +39,12 @@ export declare class TextField extends BaseElement {
     minLenght: number;
     prefix: string;
     resizable: 'both' | 'horizontal' | 'vertical' | 'none';
-    private renderStyle;
+    protected renderStyle(): string;
     private renderIcon;
     private renderAttributes;
     private renderInput;
     private renderTextarea;
-    renderTemplate(): void;
+    renderTemplate(): string;
     static readonly observedAttributes: string[];
     attributeChangedCallback(attrName: string, oldValue: any, newValue: string): void;
     forwardProperty(targetElement: HTMLElement, key: string | number, val: any): void;
