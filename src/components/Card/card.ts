@@ -6,15 +6,11 @@ import { defineElement, property } from '../../decorators';
 @defineElement(`${customelementprefix}-card`)
 export class Card extends BaseElement {
   //* Constructor *************************************************************
-  constructor() {
-    super();
-  }
-
-
   //* Properties/Getter/Setter ************************************************
-  @property()
+  @property({ reflect: true })
   public direction: 'row' | 'column' = 'column'; //! API change, was: orientation: 'horizontal' | 'vertical' = 'vertical';
-  @property()
+
+  @property({ reflect: true })
   public layout: string = '';
   protected get layoutCSS () {
     return (this.layout.match(/\d/gu) || [])
@@ -29,8 +25,7 @@ export class Card extends BaseElement {
 
   //* Template ****************************************************************
   protected renderTemplate() {
-    this.template.innerHTML = `${this.renderStyles()}
-<section class="card">
+    return `<section class="card">
   <div class="card-header"><slot name=header></slot></div>
   <div class="card-media"><slot name=media></slot></div>
   <div class="card-body"><slot name=body></slot></div>
@@ -38,8 +33,8 @@ export class Card extends BaseElement {
 </section>`;
   }
 
-  protected renderStyles() {
-    return `<style>
+  protected renderStyle() {
+    return `
 .card {
   box-sizing: border-box;
   display: flex;
@@ -47,22 +42,11 @@ export class Card extends BaseElement {
   justify-content: flex-start;
   padding: 1rem;
 }
-${this.layoutCSS}
-</style>`
+${this.layoutCSS}`
   }
 
 
 
   //* Obervers/Handlers *******************************************************
-  // static get observedAttributes() { return ['direction', 'layout']; }
-
-  // protected attributeChangedCallback(attrName: string, oldValue: string|null, newValue: string|null) {
-  //   // @ts-ignore-next-line
-  //   this[attrName] = newValue;
-  // }
-
-
-
   //* Life Cycle Callbacks ****************************************************
-
 }

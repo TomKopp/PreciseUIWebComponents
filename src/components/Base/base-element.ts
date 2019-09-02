@@ -22,7 +22,11 @@ export abstract class BaseElement extends HTMLElement {
 
   //* Properties/Getter/Setter ************************************************
   private static _classProperties: PropertyDeclarationMap = new Map();
-  protected renderRoot: any;
+  static addClassProperty(propertyKey: PropertyKey, propertyDeclaration?: PropertyDeclaration) {
+    this._classProperties.set(propertyKey, Object.assign({ observe: true, reflect: false }, propertyDeclaration));
+  }
+
+  protected renderRoot: ShadowRoot | HTMLElement;
 
   protected _template: HTMLTemplateElement | undefined;
   get template(): HTMLTemplateElement {
@@ -30,20 +34,17 @@ export abstract class BaseElement extends HTMLElement {
     return this._template;
   }
 
-  // protected _styleElement: HTMLStyleElement | undefined;
-  // get styleElement(): HTMLStyleElement {
-  //   if (!this._styleElement) this._styleElement = document.createElement('style');
-  //   return this._styleElement;
-  // }
-
-  static addClassProperty(propertyKey: PropertyKey, propertyDeclaration?: PropertyDeclaration) {
-    this._classProperties.set(propertyKey, Object.assign({ observe: true, reflect: false }, propertyDeclaration));
+  protected _styleElement: HTMLStyleElement | undefined;
+  get styleElement(): HTMLStyleElement {
+    if (!this._styleElement) this._styleElement = document.createElement('style');
+    return this._styleElement;
   }
 
 
 
   //* Template ****************************************************************
-  protected renderTemplate() { /* this.template.innerHTML = ''; */ }
+  protected renderTemplate() { return ''; /* return '<div><slot name=test></slot></div>'; */ }
+  protected renderStyle() { return ''; /* return 'div {background-color: blue;}' */ }
 
 
 
@@ -82,7 +83,8 @@ export abstract class BaseElement extends HTMLElement {
    */
   protected connectedCallback() {
     if (!this.isConnected) return;
-    this.renderTemplate();
+    this.styleElement.innerHTML = this.renderStyle();
+    this.template.innerHTML = this.renderTemplate();
     this.preCommitHook();
     requestAnimationFrame(this.commit.bind(this));
   }
@@ -106,6 +108,7 @@ export abstract class BaseElement extends HTMLElement {
   protected preCommitHook() {}
 
   protected commit() {
+    this.renderRoot.appendChild(this.styleElement);
     /*
     Does not clone the DocumentFragment, instead rips it from the template and
     places it into the render node. This way the element will retain the references

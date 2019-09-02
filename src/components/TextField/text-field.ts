@@ -112,8 +112,8 @@ export class TextField extends BaseElement {
 
 
 //* Template *******************************************************************
-  private renderStyle() {
-    return `<style>
+  protected renderStyle() {
+    return `
 .text-field-container {
   position: relative;
 }
@@ -239,8 +239,7 @@ textarea {
 #form-elem:focus + #description {
   color: rgb(0, 139, 208);
   /* transform: none; */
-}
-</style>`};
+}`};
 
   private renderIcon = () => this.icon ? this.icon : `Icon/ErrorIco`;
   //@ts-ignore-next-line
@@ -249,7 +248,7 @@ textarea {
   private renderTextarea = () => `<textarea id=form-elem ${this.renderAttributes()} ${typeof this._multiline === 'number' ? `row=${this._multiline}` : ''}></textarea>`;
 
   renderTemplate() {
-    this.template.innerHTML = `${this.renderStyle()}
+    return `
 <div class=text-field-container>
   <div class=stack-pannel>
     <span id=prefix><slot name=prefix>Prefix</slot></span>
