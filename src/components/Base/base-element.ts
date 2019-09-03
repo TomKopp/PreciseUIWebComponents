@@ -81,7 +81,7 @@ export abstract class BaseElement extends HTMLElement {
     const propertyDeclaration = (this.constructor as typeof BaseElement)._classProperties.get(attrName) || defaultPropertyDeclaration;
     const attr2prop = propertyDeclaration.convertFromAttribute || identity;
     // @ts-ignore-next-line
-    this[attrName] = attr2prop(newValue);
+    this[attrName] = attr2prop.call(this, newValue);
   }
 
   protected requestUpdate() { console.log('requestUpdate: ', this); return; }
