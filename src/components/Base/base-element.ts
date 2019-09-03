@@ -1,4 +1,15 @@
 import { PropertyDeclarationMap, PropertyDeclaration } from '../../types';
+import { identity } from '../../utility';
+
+export * from './../../decorators';
+export * from '../../utility';
+
+export const defaultPropertyDeclaration: PropertyDeclaration = {
+  observe: true,
+  reflect: false,
+  convertToAttribute: identity,
+  convertFromAttribute: identity
+};
 
 //* Class *********************************************************************
 export abstract class BaseElement extends HTMLElement {
@@ -23,7 +34,7 @@ export abstract class BaseElement extends HTMLElement {
   //* Properties/Getter/Setter ************************************************
   private static _classProperties: PropertyDeclarationMap = new Map();
   static addClassProperty(propertyKey: PropertyKey, propertyDeclaration?: PropertyDeclaration) {
-    this._classProperties.set(propertyKey, Object.assign({ observe: true, reflect: false }, propertyDeclaration));
+    this._classProperties.set(propertyKey, Object.assign({}, defaultPropertyDeclaration, propertyDeclaration));
   }
 
   protected renderRoot: ShadowRoot | HTMLElement;
@@ -66,9 +77,14 @@ export abstract class BaseElement extends HTMLElement {
    * Note: only attributes listed in the observedAttributes property will receive this callback.
    */
   protected attributeChangedCallback(attrName: string, oldValue: string|null, newValue: string|null) {
+    if (oldValue === newValue) return;
+    const propertyDeclaration = (this.constructor as typeof BaseElement)._classProperties.get(attrName) || defaultPropertyDeclaration;
+    const attr2prop = propertyDeclaration.convertFromAttribute || identity;
     // @ts-ignore-next-line
-    if (oldValue !== newValue) this[attrName] = newValue;
+    this[attrName] = attr2prop(newValue);
   }
+
+  protected requestUpdate() { console.log('requestUpdate: ', this); return; }
 
 
 
