@@ -1,4 +1,7 @@
 import { PropertyDeclaration } from '../../types';
+export * from './../../decorators';
+export * from '../../utility';
+export declare const defaultPropertyDeclaration: PropertyDeclaration;
 export declare abstract class BaseElement extends HTMLElement {
     constructor();
     private static _classProperties;
@@ -10,8 +13,11 @@ export declare abstract class BaseElement extends HTMLElement {
     readonly styleElement: HTMLStyleElement;
     protected renderTemplate(): string;
     protected renderStyle(): string;
+    private updateAttributes;
+    private render;
     static readonly observedAttributes: string[];
     protected attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void;
+    protected requestUpdate(): void;
     protected connectedCallback(): void;
     protected preCommitHook(): void;
     protected commit(): void;

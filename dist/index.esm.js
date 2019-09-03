@@ -447,6 +447,9 @@ function _optionalCallableProperty(obj, name) {
 
 const customelementprefix="pui";
 
+function identity(value) {
+  return value;
+}
 const booleanAttribute2Boolean = val => Boolean(val === '' ? true : val);
 const debounce = (func, wait, immediate = false) => {
   if (typeof func !== 'function') {
@@ -469,6 +472,56 @@ const debounce = (func, wait, immediate = false) => {
   };
 };
 
+const defineElement = (name, options) => function (classDescriptor) {
+  classDescriptor.finisher = function finisher(classConstructor) {
+    customElements.define(name, classConstructor, options);
+  };
+  return classDescriptor;
+};
+function property(propertyDeclaration) {
+  return function (propertyDescriptor, name) {
+    if (propertyDescriptor.kind === 'field') {
+      const propertyKey = `__${propertyDescriptor.key}`;
+      propertyDescriptor.extras = [{
+        key: propertyKey,
+        kind: propertyDescriptor.kind,
+        placement: propertyDescriptor.placement,
+        initializer: propertyDescriptor.initializer,
+        descriptor: {
+          configurable: true,
+          enumerable: true,
+          writable: true
+        }
+      }];
+      propertyDescriptor.kind = 'method';
+      propertyDescriptor.placement = 'prototype';
+      delete propertyDescriptor.initializer;
+      propertyDescriptor.descriptor = {
+        get() {
+          return this[propertyKey];
+        },
+        set(val) {
+          if (this[propertyKey] === val) return;
+          this[propertyKey] = val;
+          this.requestUpdate();
+        },
+        configurable: true,
+        enumerable: true
+      };
+    }
+    propertyDescriptor.finisher = function finisher(classConstructor) {
+      classConstructor.addClassProperty(propertyDescriptor.key, propertyDeclaration);
+    };
+    return propertyDescriptor;
+  };
+}
+
+const defaultPropertyDeclaration = {
+  observe: true,
+  reflect: false,
+  convertToAttribute: identity,
+  convertFromAttribute: identity
+};
 class BaseElement extends HTMLElement {
   constructor() {
     super();
@@ -485,10 +538,7 @@ class BaseElement extends HTMLElement {
     this.renderRoot = this.shadowRoot;
   }
   static addClassProperty(propertyKey, propertyDeclaration) {
-    this._classProperties.set(propertyKey, Object.assign({
-      observe: true,
-      reflect: false
-    }, propertyDeclaration));
+    this._classProperties.set(propertyKey, Object.assign({}, defaultPropertyDeclaration, propertyDeclaration));
   }
   get template() {
     if (!this._template) this._template = document.createElement('template');
@@ -504,6 +554,21 @@ class BaseElement extends HTMLElement {
   renderStyle() {
     return '';
   }
+  updateAttributes(val, key) {
+    if (!val.reflect || typeof key !== 'string') return;
+    const {
+      convertToAttribute = identity
+    } = val;
+    const prop = this[key];
+    if (prop) this.setAttribute(key, convertToAttribute.call(this, prop));else this.removeAttribute(key);
+  }
+  render() {
+    this.styleElement.innerHTML = this.renderStyle();
+    this.template.innerHTML = this.renderTemplate();
+    this.constructor._classProperties.forEach(this.updateAttributes, this);
+    this.preCommitHook();
+    requestAnimationFrame(this.commit.bind(this));
+  }
   static get observedAttributes() {
     const ret = [];
     this._classProperties.forEach((val, key) => {
@@ -512,14 +577,19 @@ class BaseElement extends HTMLElement {
     return ret;
   }
   attributeChangedCallback(attrName, oldValue, newValue) {
-    if (oldValue !== newValue) this[attrName] = newValue;
+    if (oldValue === newValue) return;
+    const {
+      convertFromAttribute = identity
+    } = this.constructor._classProperties.get(attrName) || defaultPropertyDeclaration;
+    this[attrName] = convertFromAttribute.call(this, newValue);
+  }
+  requestUpdate() {
+    console.log('requestUpdate: ', this);
+    this.render();
   }
   connectedCallback() {
     if (!this.isConnected) return;
-    this.styleElement.innerHTML = this.renderStyle();
-    this.template.innerHTML = this.renderTemplate();
-    this.preCommitHook();
-    requestAnimationFrame(this.commit.bind(this));
+    this.render();
   }
   preCommitHook() {}
   commit() {
@@ -528,19 +598,6 @@ class BaseElement extends HTMLElement {
   }
 }
 _defineProperty(BaseElement, "_classProperties", new Map());
-
-const defineElement = (name, options) => function (classDescriptor) {
-  classDescriptor.finisher = classConstructor => customElements.define(name, classConstructor, options);
-  return classDescriptor;
-};
-function property(propertyDeclaration) {
-  return function (propertyDescriptor, name) {
-    propertyDescriptor.finisher = function finisher(classConstructor) {
-      classConstructor.addClassProperty(propertyDescriptor.key, propertyDeclaration);
-    };
-    return propertyDescriptor;
-  };
-}
 
 let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], function (_initialize, _BaseElement) {
   class TextField extends _BaseElement {
@@ -1084,11 +1141,17 @@ let Card = _decorate([defineElement(`${customelementprefix}-card`)], function (_
     }, {
       kind: "field",
       decorators: [property({
-        reflect: true
+        reflect: true,
+        convertFromAttribute(val) {
+          return val !== null;
+        },
+        convertToAttribute(val) {
+          return val ? '' : null;
+        }
       })],
-      key: "test",
+      key: "disabled",
       value() {
-        return 'test';
+        return false;
       }
     }, {
       kind: "method",
