@@ -1,6 +1,5 @@
 import { customelementprefix } from '../../../package.json';
-import { BaseElement } from '../Base/base-element';
-import { defineElement, property } from '../../decorators';
+import { BaseElement, defineElement, property } from '../Base/base-element';
 
 //* Class *********************************************************************
 @defineElement(`${customelementprefix}-card`)
@@ -18,8 +17,11 @@ export class Card extends BaseElement {
       .join('\n');
   }
 
-  @property({ reflect: true })
-  test = 'test';
+  @property({
+    reflect: true,
+    convertFromAttribute(val: any) { return val !== null; }
+  })
+  public disabled: boolean = false;
 
 
 
