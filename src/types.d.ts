@@ -7,6 +7,6 @@ export type PropertyDeclarationMap = Map<PropertyKey, PropertyDeclaration>;
 export interface PropertyDeclaration {
   observe?: boolean,
   reflect?: boolean,
-  convertToAttribute?: CallableFunction;
-  convertFromAttribute?: CallableFunction;
+  convertToAttribute?: Function;
+  convertFromAttribute?: Function;
 }

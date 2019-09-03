@@ -19,7 +19,8 @@ export class Card extends BaseElement {
 
   @property({
     reflect: true,
-    convertFromAttribute(val: any) { return val !== null; }
+    convertFromAttribute(val: any) { return val !== null; },
+    convertToAttribute(val: any) { return val ? '' : null; }
   })
   public disabled: boolean = false;
 

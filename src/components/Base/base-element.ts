@@ -57,6 +57,24 @@ export abstract class BaseElement extends HTMLElement {
   protected renderTemplate() { return ''; /* return '<div><slot name=test></slot></div>'; */ }
   protected renderStyle() { return ''; /* return 'div {background-color: blue;}' */ }
 
+  private updateAttributes(val: PropertyDeclaration, key: PropertyKey) {
+      if (!val.reflect || typeof key !== 'string') return;
+
+      const { convertToAttribute = identity } = val;
+      // @ts-ignore
+      const prop = this[key];
+      if (prop) this.setAttribute(key, convertToAttribute.call(this, prop));
+      else this.removeAttribute(key);
+  }
+
+  private render() {
+    this.styleElement.innerHTML = this.renderStyle();
+    this.template.innerHTML = this.renderTemplate();
+    (this.constructor as typeof BaseElement)._classProperties.forEach(this.updateAttributes, this);
+    this.preCommitHook();
+    requestAnimationFrame(this.commit.bind(this));
+  }
+
 
 
   //* Obervers/Handlers *******************************************************
@@ -66,8 +84,8 @@ export abstract class BaseElement extends HTMLElement {
   static get observedAttributes() {
     const ret: string[] = [];
     this._classProperties.forEach((val: PropertyDeclaration, key: PropertyKey) => {
-        if (val.observe && typeof key === 'string') ret.push(key);
-      });
+      if (val.observe && typeof key === 'string') ret.push(key);
+    });
     return ret;
   }
 
@@ -76,15 +94,17 @@ export abstract class BaseElement extends HTMLElement {
    * Also called for initial values when an element is created by the parser, or upgraded.
    * Note: only attributes listed in the observedAttributes property will receive this callback.
    */
-  protected attributeChangedCallback(attrName: string, oldValue: string|null, newValue: string|null) {
+  protected attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null) {
     if (oldValue === newValue) return;
-    const propertyDeclaration = (this.constructor as typeof BaseElement)._classProperties.get(attrName) || defaultPropertyDeclaration;
-    const attr2prop = propertyDeclaration.convertFromAttribute || identity;
+    const { convertFromAttribute = identity } = (this.constructor as typeof BaseElement)._classProperties.get(attrName) || defaultPropertyDeclaration;
     // @ts-ignore-next-line
-    this[attrName] = attr2prop.call(this, newValue);
+    this[attrName] = convertFromAttribute.call(this, newValue);
   }
 
-  protected requestUpdate() { console.log('requestUpdate: ', this); return; }
+  protected requestUpdate() {
+    console.log('requestUpdate: ', this);
+    this.render();
+  }
 
 
 
@@ -99,10 +119,7 @@ export abstract class BaseElement extends HTMLElement {
    */
   protected connectedCallback() {
     if (!this.isConnected) return;
-    this.styleElement.innerHTML = this.renderStyle();
-    this.template.innerHTML = this.renderTemplate();
-    this.preCommitHook();
-    requestAnimationFrame(this.commit.bind(this));
+    this.render();
   }
 
   /**
