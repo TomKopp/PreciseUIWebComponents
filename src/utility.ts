@@ -1,5 +1,7 @@
 export const noop = () => {};
 
+export function identity(value: any) { return value; };
+
 export const booleanAttribute2Boolean = (val: any) => Boolean(val === '' ? true : val);
 
 // I hate TypeScript and at this point it is just annoying.
