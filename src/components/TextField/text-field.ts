@@ -1,8 +1,6 @@
 import { customelementprefix } from '../../../package.json';
 import { InputType, AutocompleteValue } from '../../types';
-import { noop, debounce, booleanAttribute2Boolean } from '../../utility';
-import { BaseElement } from '../Base/base-element';
-import { defineElement } from '../../decorators';
+import { BaseElement, defineElement, debounce, booleanAttribute2Boolean } from '../Base/base-element';
 
 
 //* Class **********************************************************************
