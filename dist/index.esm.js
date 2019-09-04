@@ -1185,5 +1185,18 @@ ${this.layoutCSS}`;
   };
 }, BaseElement);
 
-export { Card, TextField };
+let Container = _decorate([defineElement(`${customelementprefix}-container`)], function (_initialize, _BaseElement) {
+  class Container extends _BaseElement {
+    constructor(...args) {
+      super(...args);
+      _initialize(this);
+    }
+  }
+  return {
+    F: Container,
+    d: []
+  };
+}, BaseElement);
+
+export { Card, Container, TextField };
 //# sourceMappingURL=index.esm.js.map

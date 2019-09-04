@@ -1188,7 +1188,21 @@ ${this.layoutCSS}`;
     };
   }, BaseElement);
 
+  let Container = _decorate([defineElement(`${customelementprefix}-container`)], function (_initialize, _BaseElement) {
+    class Container extends _BaseElement {
+      constructor(...args) {
+        super(...args);
+        _initialize(this);
+      }
+    }
+    return {
+      F: Container,
+      d: []
+    };
+  }, BaseElement);
+
   exports.Card = Card;
+  exports.Container = Container;
   exports.TextField = TextField;
 
   return exports;
