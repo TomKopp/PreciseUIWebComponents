@@ -519,8 +519,8 @@ function property(propertyDeclaration) {
 const defaultPropertyDeclaration = {
   observe: true,
   reflect: false,
-  convertToAttribute: identity,
-  convertFromAttribute: identity
+  propertyToAttribute: identity,
+  attributeToProperty: identity
 };
 class BaseElement extends HTMLElement {
   constructor() {
@@ -554,18 +554,23 @@ class BaseElement extends HTMLElement {
   renderStyle() {
     return '';
   }
-  updateAttributes(val, key) {
-    if (!val.reflect || typeof key !== 'string') return;
-    const {
-      convertToAttribute = identity
-    } = val;
-    const prop = this[key];
-    if (prop) this.setAttribute(key, convertToAttribute.call(this, prop));else this.removeAttribute(key);
+  requestUpdate() {
+    console.log('requestUpdate: ', this);
+    this.render();
+  }
+  renderAttributes() {
+    this.constructor._classProperties.forEach((val, key) => {
+      if (!val.reflect || typeof key !== 'string') return;
+      const {
+        propertyToAttribute = identity
+      } = val;
+      const prop = this[key];
+      if (prop) this.setAttribute(key, propertyToAttribute.call(this, prop));else this.removeAttribute(key);
+    });
   }
   render() {
     this.styleElement.innerHTML = this.renderStyle();
     this.template.innerHTML = this.renderTemplate();
-    this.constructor._classProperties.forEach(this.updateAttributes, this);
     this.preCommitHook();
     requestAnimationFrame(this.commit.bind(this));
   }
@@ -579,13 +584,9 @@ class BaseElement extends HTMLElement {
   attributeChangedCallback(attrName, oldValue, newValue) {
     if (oldValue === newValue) return;
     const {
-      convertFromAttribute = identity
+      attributeToProperty = identity
     } = this.constructor._classProperties.get(attrName) || defaultPropertyDeclaration;
-    this[attrName] = convertFromAttribute.call(this, newValue);
-  }
-  requestUpdate() {
-    console.log('requestUpdate: ', this);
-    this.render();
+    this[attrName] = attributeToProperty.call(this, newValue);
   }
   connectedCallback() {
     if (!this.isConnected) return;
@@ -595,6 +596,7 @@ class BaseElement extends HTMLElement {
   commit() {
     this.renderRoot.appendChild(this.styleElement);
     this.renderRoot.appendChild(this.template.content);
+    this.renderAttributes();
   }
 }
 _defineProperty(BaseElement, "_classProperties", new Map());
@@ -1040,21 +1042,21 @@ textarea {
       }
     }, {
       kind: "field",
-      key: "renderAttributes",
+      key: "attr2string",
       value() {
-        return () => TextField.observedAttributes.map(val => val in this ? `${val}="${this[val]}"` : '').join(' ');
+        return () => this.constructor.observedAttributes.map(val => val in this ? `${val}="${this[val]}"` : '').join(' ');
       }
     }, {
       kind: "field",
       key: "renderInput",
       value() {
-        return () => `<input id=form-elem ${this.renderAttributes()} />`;
+        return () => `<input id=form-elem ${this.attr2string()} />`;
       }
     }, {
       kind: "field",
       key: "renderTextarea",
       value() {
-        return () => `<textarea id=form-elem ${this.renderAttributes()} ${typeof this._multiline === 'number' ? `row=${this._multiline}` : ''}></textarea>`;
+        return () => `<textarea id=form-elem ${this.attr2string()} ${typeof this._multiline === 'number' ? `row=${this._multiline}` : ''}></textarea>`;
       }
     }, {
       kind: "method",
@@ -1142,10 +1144,10 @@ let Card = _decorate([defineElement(`${customelementprefix}-card`)], function (_
       kind: "field",
       decorators: [property({
         reflect: true,
-        convertFromAttribute(val) {
+        attributeToProperty(val) {
           return val !== null;
         },
-        convertToAttribute(val) {
+        propertyToAttribute(val) {
           return val ? '' : null;
         }
       })],

@@ -41,7 +41,7 @@ export declare class TextField extends BaseElement {
     resizable: 'both' | 'horizontal' | 'vertical' | 'none';
     protected renderStyle(): string;
     private renderIcon;
-    private renderAttributes;
+    private attr2string;
     private renderInput;
     private renderTextarea;
     renderTemplate(): string;

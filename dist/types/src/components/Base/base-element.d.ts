@@ -13,11 +13,11 @@ export declare abstract class BaseElement extends HTMLElement {
     readonly styleElement: HTMLStyleElement;
     protected renderTemplate(): string;
     protected renderStyle(): string;
-    private updateAttributes;
+    protected requestUpdate(): void;
+    protected renderAttributes(): void;
     private render;
     static readonly observedAttributes: string[];
     protected attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void;
-    protected requestUpdate(): void;
     protected connectedCallback(): void;
     protected preCommitHook(): void;
     protected commit(): void;
