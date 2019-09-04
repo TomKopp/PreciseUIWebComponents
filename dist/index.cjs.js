@@ -1191,14 +1191,52 @@ ${this.layoutCSS}`;
 
 let Container = _decorate([defineElement(`${customelementprefix}-container`)], function (_initialize, _BaseElement) {
   class Container extends _BaseElement {
-    constructor(...args) {
-      super(...args);
+    constructor() {
+      super();
       _initialize(this);
     }
   }
   return {
     F: Container,
-    d: []
+    d: [{
+      kind: "field",
+      decorators: [property({
+        observe: true,
+        reflect: true
+      })],
+      key: "align",
+      value() {
+        return 'center';
+      }
+    }, {
+      kind: "field",
+      decorators: [property({
+        observe: true,
+        reflect: true
+      })],
+      key: "maxWidth",
+      value() {
+        return undefined;
+      }
+    }, {
+      kind: "method",
+      key: "renderTemplate",
+      value: function renderTemplate() {
+        return `<div class=container>
+  <slot></slot>
+</div>`;
+      }
+    }, {
+      kind: "method",
+      key: "renderStyle",
+      value: function renderStyle() {
+        return `.container {
+  display: flex;
+  justify-content: ${this.align === 'center' ? 'center' : `flex-${this.align === 'left' ? 'left' : 'right'}`};
+  ${this.maxWidth ? `max-width: ${this.maxWidth}` : ''}
+}`;
+      }
+    }]
   };
 }, BaseElement);
 
