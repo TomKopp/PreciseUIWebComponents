@@ -7,8 +7,8 @@ export * from '../../utility';
 export const defaultPropertyDeclaration: PropertyDeclaration = {
   observe: true,
   reflect: false,
-  convertToAttribute: identity,
-  convertFromAttribute: identity
+  propertyToAttribute: identity,
+  attributeToProperty: identity
 };
 
 //* Class *********************************************************************
@@ -66,10 +66,10 @@ export abstract class BaseElement extends HTMLElement {
     (this.constructor as typeof BaseElement)._classProperties.forEach((val: PropertyDeclaration, key: PropertyKey) => {
       if (!val.reflect || typeof key !== 'string') return;
 
-      const { convertToAttribute = identity } = val;
+      const { propertyToAttribute = identity } = val;
       // @ts-ignore
       const prop = this[key];
-      if (prop) this.setAttribute(key, convertToAttribute.call(this, prop));
+      if (prop) this.setAttribute(key, propertyToAttribute.call(this, prop));
       else this.removeAttribute(key);
     });
   }
@@ -102,9 +102,9 @@ export abstract class BaseElement extends HTMLElement {
    */
   protected attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null) {
     if (oldValue === newValue) return;
-    const { convertFromAttribute = identity } = (this.constructor as typeof BaseElement)._classProperties.get(attrName) || defaultPropertyDeclaration;
+    const { attributeToProperty = identity } = (this.constructor as typeof BaseElement)._classProperties.get(attrName) || defaultPropertyDeclaration;
     // @ts-ignore-next-line
-    this[attrName] = convertFromAttribute.call(this, newValue);
+    this[attrName] = attributeToProperty.call(this, newValue);
   }
 
 
