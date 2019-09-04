@@ -241,9 +241,9 @@ textarea {
 
   private renderIcon = () => this.icon ? this.icon : `Icon/ErrorIco`;
   //@ts-ignore-next-line
-  private renderAttributes = () => TextField.observedAttributes.map((val) => val in this ? `${val}="${this[val]}"` : '').join(' ');
-  private renderInput = () => `<input id=form-elem ${this.renderAttributes()} />`;
-  private renderTextarea = () => `<textarea id=form-elem ${this.renderAttributes()} ${typeof this._multiline === 'number' ? `row=${this._multiline}` : ''}></textarea>`;
+  private attr2string = () => (this.constructor as typeof TextField).observedAttributes.map((val) => val in this ? `${val}="${this[val]}"` : '').join(' ');
+  private renderInput = () => `<input id=form-elem ${this.attr2string()} />`;
+  private renderTextarea = () => `<textarea id=form-elem ${this.attr2string()} ${typeof this._multiline === 'number' ? `row=${this._multiline}` : ''}></textarea>`;
 
   renderTemplate() {
     return `

@@ -57,7 +57,13 @@ export abstract class BaseElement extends HTMLElement {
   protected renderTemplate() { return ''; /* return '<div><slot name=test></slot></div>'; */ }
   protected renderStyle() { return ''; /* return 'div {background-color: blue;}' */ }
 
-  private updateAttributes(val: PropertyDeclaration, key: PropertyKey) {
+  protected requestUpdate() {
+    console.log('requestUpdate: ', this);
+    this.render();
+  }
+
+  protected renderAttributes() {
+    (this.constructor as typeof BaseElement)._classProperties.forEach((val: PropertyDeclaration, key: PropertyKey) => {
       if (!val.reflect || typeof key !== 'string') return;
 
       const { convertToAttribute = identity } = val;
@@ -65,12 +71,12 @@ export abstract class BaseElement extends HTMLElement {
       const prop = this[key];
       if (prop) this.setAttribute(key, convertToAttribute.call(this, prop));
       else this.removeAttribute(key);
+    });
   }
 
   private render() {
     this.styleElement.innerHTML = this.renderStyle();
     this.template.innerHTML = this.renderTemplate();
-    (this.constructor as typeof BaseElement)._classProperties.forEach(this.updateAttributes, this);
     this.preCommitHook();
     requestAnimationFrame(this.commit.bind(this));
   }
@@ -99,11 +105,6 @@ export abstract class BaseElement extends HTMLElement {
     const { convertFromAttribute = identity } = (this.constructor as typeof BaseElement)._classProperties.get(attrName) || defaultPropertyDeclaration;
     // @ts-ignore-next-line
     this[attrName] = convertFromAttribute.call(this, newValue);
-  }
-
-  protected requestUpdate() {
-    console.log('requestUpdate: ', this);
-    this.render();
   }
 
 
@@ -148,5 +149,6 @@ export abstract class BaseElement extends HTMLElement {
     of objects within the template.
     */
     this.renderRoot.appendChild(this.template.content);
+    this.renderAttributes();
   }
 }
