@@ -1240,7 +1240,76 @@ let Container = _decorate([defineElement(`${customelementprefix}-container`)], f
   };
 }, BaseElement);
 
+let ContentSwitch = _decorate([defineElement(`${customelementprefix}-content-switch`)], function (_initialize, _BaseElement) {
+  class ContentSwitch extends _BaseElement {
+    constructor() {
+      super();
+      _initialize(this);
+    }
+  }
+  return {
+    F: ContentSwitch,
+    d: [{
+      kind: "field",
+      decorators: [property({
+        observe: true,
+        reflect: true,
+        attributeToProperty(val) {
+          return Number(val);
+        },
+        propertyToAttribute(val) {
+          return String(val);
+        }
+      })],
+      key: "defaultIndex",
+      value() {
+        return 1;
+      }
+    }, {
+      kind: "field",
+      decorators: [property({
+        observe: true,
+        reflect: true,
+        attributeToProperty(val) {
+          return Number(val);
+        },
+        propertyToAttribute(val) {
+          return String(val);
+        }
+      })],
+      key: "selectedIndex",
+      value() {
+        return 1;
+      }
+    }, {
+      kind: "field",
+      decorators: [property({
+        reflect: true
+      })],
+      key: "orientation",
+      value() {
+        return 'horizontal';
+      }
+    }, {
+      kind: "method",
+      key: "renderTemplate",
+      value: function renderTemplate() {
+        return `<div class=content-switch>
+  <slot></slot>
+</div>`;
+      }
+    }, {
+      kind: "method",
+      key: "renderStyle",
+      value: function renderStyle() {
+        return ``;
+      }
+    }]
+  };
+}, BaseElement);
+
 exports.Card = Card;
 exports.Container = Container;
+exports.ContentSwitch = ContentSwitch;
 exports.TextField = TextField;
 //# sourceMappingURL=index.cjs.js.map
