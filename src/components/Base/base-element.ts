@@ -32,10 +32,12 @@ export abstract class BaseElement extends HTMLElement {
 
 
   //* Properties/Getter/Setter ************************************************
-  private static _classProperties: PropertyDeclarationMap = new Map();
+  protected static _classProperties: PropertyDeclarationMap = new Map();
   static addClassProperty(propertyKey: PropertyKey, propertyDeclaration?: PropertyDeclaration) {
     this._classProperties.set(propertyKey, Object.assign({}, defaultPropertyDeclaration, propertyDeclaration));
   }
+
+  protected rAFScheduled: boolean = false;
 
   protected renderRoot: ShadowRoot | HTMLElement;
 
@@ -57,8 +59,13 @@ export abstract class BaseElement extends HTMLElement {
   protected renderTemplate() { return ''; /* return '<div><slot name=test></slot></div>'; */ }
   protected renderStyle() { return ''; /* return 'div {background-color: blue;}' */ }
 
-  protected requestUpdate() {
-    console.log('requestUpdate: ', this);
+  protected requestUpdate(propertyKey: any, oldValue: any, newValue: any) {
+    //! Remove log
+    console.log('requestUpdate:', this);
+
+    // Test if the value actually changed
+    if (Object.is(oldValue, newValue)) return;
+
     this.render();
   }
 
@@ -75,10 +82,20 @@ export abstract class BaseElement extends HTMLElement {
   }
 
   private render() {
+    //! Remove log
+    console.log('render:', this);
+
     this.styleElement.innerHTML = this.renderStyle();
     this.template.innerHTML = this.renderTemplate();
     this.preCommitHook();
-    requestAnimationFrame(this.commit.bind(this));
+
+    if (!this.rAFScheduled) {
+      this.rAFScheduled = true;
+      requestAnimationFrame(() => {
+        this.commit();
+        this.rAFScheduled = false;
+      });
+    }
   }
 
 

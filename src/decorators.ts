@@ -37,9 +37,9 @@ export function property(propertyDeclaration?: PropertyDeclaration) {
       propertyDescriptor.descriptor = {
         get() { return this[propertyKey]; },
         set(val: any) {
-          if (this[propertyKey] === val) return;
+          const oldVal = this[propertyKey];
           this[propertyKey] = val;
-          this.requestUpdate();
+          this.requestUpdate(propertyDescriptor.key, oldVal, val);
         },
         configurable: true,
         enumerable: true
