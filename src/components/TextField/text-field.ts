@@ -1,6 +1,6 @@
 import { customelementprefix } from '../../../package.json';
 import { InputType, AutocompleteValue } from '../../types';
-import { BaseElement, defineElement, debounce, booleanAttribute2Boolean } from '../Base/base-element';
+import { BaseElement, defineElement, debounce, attr2bool } from '../Base/base-element';
 
 
 //* Class **********************************************************************
@@ -33,15 +33,15 @@ export class TextField extends BaseElement {
 
   private _autofocus: boolean = false;
   get autofocus() { return this._autofocus; }
-  set autofocus(val) {
-    this._autofocus = booleanAttribute2Boolean(val);
+  set autofocus(val: any) {
+    this._autofocus = attr2bool(val);
     Reflect.set(this.formElement, 'autofocus', this._autofocus);
   }
 
   private _disabled: boolean = false;
   get disabled() { return this._disabled; }
-  set disabled(val) {
-    this._disabled = booleanAttribute2Boolean(val);
+  set disabled(val: any) {
+    this._disabled = attr2bool(val);
     Reflect.set(this.formElement, 'disabled', this._disabled);
   }
 
@@ -59,11 +59,11 @@ export class TextField extends BaseElement {
 
   private _readOnly: boolean = false;
   get readOnly() { return this._readOnly; }
-  set readOnly(val) { this.formElement.readOnly = this._readOnly = booleanAttribute2Boolean(val); }
+  set readOnly(val: any) { this.formElement.readOnly = this._readOnly = attr2bool(val); }
 
   private _required: boolean = false;
   get required() { return this._required; }
-  set required(val) { this.formElement.required = this._required = booleanAttribute2Boolean(val); }
+  set required(val: any) { this.formElement.required = this._required = attr2bool(val); }
 
   private _type: InputType = 'text';
   get type() { return this._type as InputType; }

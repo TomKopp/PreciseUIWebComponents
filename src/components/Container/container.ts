@@ -1,27 +1,25 @@
 import { customelementprefix } from '../../../package.json';
-import { BaseElement, defineElement, property } from "../Base/base-element";
+import { BaseElement, defineElement, property } from '../Base/base-element';
 
 @defineElement(`${customelementprefix}-container`)
 export class Container extends BaseElement {
-  constructor() { super(); }
-
-  @property({observe: true, reflect: true})
+  @property({ reflect: true })
   align: 'center' | 'left' | 'right' = 'center';
 
-  @property({observe: true, reflect: true})
-  maxWidth: number | undefined = undefined;
+  @property({ reflect: true })
+  maxWidth: number | null = null;
 
-  renderTemplate() {
+  updateTemplate() {
     return `<div class=container>
   <slot></slot>
 </div>`;
   }
 
-  renderStyle() {
+  updateStyle() {
     return `.container {
   display: flex;
   justify-content: ${this.align === 'center' ? 'center' : `flex-${this.align === 'left' ? 'left' : 'right'}`};
-  ${this.maxWidth ? `max-width: ${this.maxWidth}` : ''}
+  ${this.maxWidth === null ? `max-width: ${this.maxWidth}` : ''}
 }`;
   }
 }

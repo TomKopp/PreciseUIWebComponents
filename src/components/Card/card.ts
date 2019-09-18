@@ -1,33 +1,31 @@
 import { customelementprefix } from '../../../package.json';
-import { BaseElement, defineElement, property } from '../Base/base-element';
+import { BaseElement, defineElement, property, attr2bool, bool2attr } from '../Base/base-element';
 
-//* Class *********************************************************************
 @defineElement(`${customelementprefix}-card`)
 export class Card extends BaseElement {
-  //* Constructor *************************************************************
-  //* Properties/Getter/Setter ************************************************
+  //! API change, was: orientation: 'horizontal' | 'vertical' = 'vertical';
   @property({ reflect: true })
-  public direction: 'row' | 'column' = 'column'; //! API change, was: orientation: 'horizontal' | 'vertical' = 'vertical';
+  direction: 'row' | 'column' = 'column';
 
   @property({ reflect: true })
-  public layout: string = '';
-  protected get layoutCSS () {
+  layout: string = '';
+
+  get layoutCSS () {
     return (this.layout.match(/\d/gu) || [])
       .map((val, key) => `.card > :nth-child(${key + 1}) {flex:${val} 1 auto;}`)
       .join('\n');
   }
 
   @property({
-    reflect: true,
-    attributeToProperty(val: any) { return val !== null; },
-    propertyToAttribute(val: any) { return val ? '' : null; }
+    reflect: true
+    , attr2prop: attr2bool
+    , prop2attr: bool2attr
   })
-  public disabled: boolean = false;
+  disabled: boolean = false;
 
 
 
-  //* Template ****************************************************************
-  protected renderTemplate() {
+  updateTemplate() {
     return `<section class="card">
   <div class="card-header"><slot name=header></slot></div>
   <div class="card-media"><slot name=media></slot></div>
@@ -36,7 +34,7 @@ export class Card extends BaseElement {
 </section>`;
   }
 
-  protected renderStyle() {
+  updateStyle() {
     return `
 .card {
   box-sizing: border-box;
@@ -45,11 +43,6 @@ export class Card extends BaseElement {
   justify-content: flex-start;
   padding: 1rem;
 }
-${this.layoutCSS}`
+${this.layoutCSS}`;
   }
-
-
-
-  //* Obervers/Handlers *******************************************************
-  //* Life Cycle Callbacks ****************************************************
 }

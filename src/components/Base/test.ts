@@ -1,5 +1,5 @@
 import { customelementprefix } from '../../../package.json';
-import { noop, debounce, booleanAttribute2Boolean } from '../../utility';
+import { noop, debounce, attr2bool } from '../../utility';
 import { defineElement } from '../../decorators';
 
 
@@ -21,8 +21,8 @@ export class Test extends HTMLElement {
 //* Properties/Getter/Setter ***************************************************
   private _disabled: boolean = false;
   get disabled() { return this._disabled; }
-  set disabled(val) {
-    this._disabled = booleanAttribute2Boolean(val);
+  set disabled(val: any) {
+    this._disabled = attr2bool(val);
     this.forwardProperty(this.formElement, 'disabled', this._disabled);
   }
 
