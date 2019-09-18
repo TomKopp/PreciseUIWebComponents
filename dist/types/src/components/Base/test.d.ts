@@ -1,7 +1,7 @@
 export declare class Test extends HTMLElement {
     constructor();
     private _disabled;
-    disabled: boolean;
+    disabled: any;
     private _multiline;
     multiline: number | boolean;
     private _value;

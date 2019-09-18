@@ -450,10 +450,18 @@ var preciseuiwc = (function (exports) {
 
   const customelementprefix="pui";
 
-  function identity(value) {
-    return value;
+  function identity(val) {
+    return val;
   }
-  const booleanAttribute2Boolean = val => Boolean(val === '' ? true : val);
+  function attr2bool(val) {
+    return val !== null;
+  }
+  function bool2attr(val) {
+    return val ? '' : null;
+  }
+  function isDifferent(oldValue, newValue) {
+    return !Object.is(oldValue, newValue);
+  }
   const debounce = (func, wait, immediate = false) => {
     if (typeof func !== 'function') {
       throw new TypeError('Expected a function');
@@ -461,7 +469,7 @@ var preciseuiwc = (function (exports) {
     let timeout;
     return function debounced(...args) {
       const later = () => {
-        timeout = undefined;
+        timeout = null;
         if (!immediate) {
           func.apply(this, args);
         }
@@ -474,13 +482,22 @@ var preciseuiwc = (function (exports) {
       }
     };
   };
-
-  const defineElement = (name, options) => function (classDescriptor) {
-    classDescriptor.finisher = function finisher(classConstructor) {
-      customElements.define(name, classConstructor, options);
-    };
-    return classDescriptor;
+  const defaultPropertyDeclaration = {
+    observe: true,
+    reflect: false,
+    prop2attr: identity,
+    attr2prop: identity,
+    modified: isDifferent
   };
+
+  function defineElement(name, options) {
+    return function (classDescriptor) {
+      classDescriptor.finisher = function finisher(classConstructor) {
+        customElements.define(name, classConstructor, options);
+      };
+      return classDescriptor;
+    };
+  }
   function property(propertyDeclaration) {
     return function (propertyDescriptor, name) {
       if (propertyDescriptor.kind === 'field') {
@@ -504,9 +521,9 @@ var preciseuiwc = (function (exports) {
             return this[propertyKey];
           },
           set(val) {
-            if (this[propertyKey] === val) return;
+            const oldVal = this[propertyKey];
             this[propertyKey] = val;
-            this.requestUpdate();
+            this.requestUpdate(propertyDescriptor.key, oldVal, val);
           },
           configurable: true,
           enumerable: true
@@ -519,90 +536,128 @@ var preciseuiwc = (function (exports) {
     };
   }
 
-  const defaultPropertyDeclaration = {
-    observe: true,
-    reflect: false,
-    propertyToAttribute: identity,
-    attributeToProperty: identity
-  };
   class BaseElement extends HTMLElement {
     constructor() {
       super();
-      _defineProperty(this, "renderRoot", void 0);
+      _defineProperty(this, "_renderRoot", void 0);
+      _defineProperty(this, "_rAFScheduled", false);
       _defineProperty(this, "_template", void 0);
       _defineProperty(this, "_styleElement", void 0);
       this.attachShadow({
         mode: 'open'
       });
       if (!this.shadowRoot) {
-        this.renderRoot = this;
+        this._renderRoot = this;
         throw new Error('No ShadowRoot');
       }
-      this.renderRoot = this.shadowRoot;
-    }
-    static addClassProperty(propertyKey, propertyDeclaration) {
-      this._classProperties.set(propertyKey, Object.assign({}, defaultPropertyDeclaration, propertyDeclaration));
-    }
-    get template() {
-      if (!this._template) this._template = document.createElement('template');
-      return this._template;
-    }
-    get styleElement() {
-      if (!this._styleElement) this._styleElement = document.createElement('style');
-      return this._styleElement;
-    }
-    renderTemplate() {
-      return '';
-    }
-    renderStyle() {
-      return '';
-    }
-    requestUpdate() {
-      console.log('requestUpdate: ', this);
-      this.render();
-    }
-    renderAttributes() {
-      this.constructor._classProperties.forEach((val, key) => {
-        if (!val.reflect || typeof key !== 'string') return;
-        const {
-          propertyToAttribute = identity
-        } = val;
-        const prop = this[key];
-        if (prop) this.setAttribute(key, propertyToAttribute.call(this, prop));else this.removeAttribute(key);
-      });
-    }
-    render() {
-      this.styleElement.innerHTML = this.renderStyle();
-      this.template.innerHTML = this.renderTemplate();
-      this.preCommitHook();
-      requestAnimationFrame(this.commit.bind(this));
+      this._renderRoot = this.shadowRoot;
     }
     static get observedAttributes() {
       const ret = [];
-      this._classProperties.forEach((val, key) => {
-        if (val.observe && typeof key === 'string') ret.push(key);
+      this.classProperties.forEach((propertyDeclaration, propertyKey) => {
+        if (propertyDeclaration.observe && typeof propertyKey === 'string') {
+          ret.push(propertyKey);
+        }
       });
       return ret;
     }
+    static get classProperties() {
+      if (!Object.prototype.hasOwnProperty.call(this, '_classProperties')) {
+        Object.defineProperty(this, '_classProperties', {
+          enumerable: true,
+          value: new Map()
+        });
+      }
+      return this._classProperties;
+    }
+    static addClassProperty(propertyKey, propertyDeclaration) {
+      this.classProperties.set(propertyKey, Object.assign({}, defaultPropertyDeclaration, propertyDeclaration));
+    }
+    get template() {
+      if (!this._template) {
+        this._template = document.createElement('template');
+      }
+      return this._template;
+    }
+    get styleElement() {
+      if (!this._styleElement) {
+        this._styleElement = document.createElement('style');
+      }
+      return this._styleElement;
+    }
+    updateTemplate() {
+      throw new Error('must be implemented by subclass!');
+    }
+    updateStyle() {
+      throw new Error('must be implemented by subclass!');
+    }
+    reflectAttributes() {
+      const reflector = (propertyDeclaration, propertyKey) => {
+        if (!propertyDeclaration.reflect && typeof propertyKey !== 'string') {
+          return;
+        }
+        const {
+          prop2attr = identity
+        } = propertyDeclaration;
+        const prop = prop2attr.call(this, this[propertyKey]);
+        if (prop === null) {
+          this.removeAttribute(propertyKey);
+        } else {
+          this.setAttribute(propertyKey, prop);
+        }
+      };
+      this.constructor.classProperties.forEach(reflector);
+    }
     attributeChangedCallback(attrName, oldValue, newValue) {
-      if (oldValue === newValue) return;
+      if (oldValue === newValue) {
+        return;
+      }
       const {
-        attributeToProperty = identity
-      } = this.constructor._classProperties.get(attrName) || defaultPropertyDeclaration;
-      this[attrName] = attributeToProperty.call(this, newValue);
+        attr2prop = identity
+      } = this.constructor.classProperties.get(attrName) || defaultPropertyDeclaration;
+      this[attrName] = attr2prop.call(this, newValue);
     }
     connectedCallback() {
-      if (!this.isConnected) return;
-      this.render();
+      if (!this.isConnected) {
+        return;
+      }
+      this.requestRender(true, true, true);
     }
-    preCommitHook() {}
-    commit() {
-      this.renderRoot.appendChild(this.styleElement);
-      this.renderRoot.appendChild(this.template.content);
-      this.renderAttributes();
+    requestUpdate(propertyKey, oldValue, newValue) {
+      const {
+        modified = isDifferent
+        ,
+        reflect = false
+      } = this.constructor.classProperties.get(propertyKey) || defaultPropertyDeclaration;
+      if (modified.call(this, oldValue, newValue)) {
+        this.styleElement.innerHTML = this.updateStyle();
+        this.template.innerHTML = this.updateTemplate();
+        this.requestRender(true, true, reflect);
+      }
+    }
+    requestRender(dirtyTemplate, dirtyStyle, dirtyAttribute) {
+      this.preRenderHook();
+      if (!this._rAFScheduled) {
+        this._rAFScheduled = true;
+        requestAnimationFrame(() => {
+          this.render(dirtyTemplate, dirtyStyle, dirtyAttribute);
+          this._rAFScheduled = false;
+        });
+      }
+    }
+    preRenderHook() {}
+    render(dirtyTemplate, dirtyStyle, dirtyAttribute) {
+      if (dirtyStyle) {
+        this._renderRoot.appendChild(this.styleElement);
+      }
+      if (dirtyTemplate) {
+        this._renderRoot.appendChild(this.template.content);
+      }
+      if (dirtyAttribute) {
+        this.reflectAttributes();
+      }
     }
   }
-  _defineProperty(BaseElement, "_classProperties", new Map());
 
   let TextField = _decorate([defineElement(`${customelementprefix}-textfield`)], function (_initialize, _BaseElement) {
     class TextField extends _BaseElement {
@@ -671,7 +726,7 @@ var preciseuiwc = (function (exports) {
         kind: "set",
         key: "autofocus",
         value: function autofocus(val) {
-          this._autofocus = booleanAttribute2Boolean(val);
+          this._autofocus = attr2bool(val);
           Reflect.set(this.formElement, 'autofocus', this._autofocus);
         }
       }, {
@@ -690,7 +745,7 @@ var preciseuiwc = (function (exports) {
         kind: "set",
         key: "disabled",
         value: function disabled(val) {
-          this._disabled = booleanAttribute2Boolean(val);
+          this._disabled = attr2bool(val);
           Reflect.set(this.formElement, 'disabled', this._disabled);
         }
       }, {
@@ -740,7 +795,7 @@ var preciseuiwc = (function (exports) {
         kind: "set",
         key: "readOnly",
         value: function readOnly(val) {
-          this.formElement.readOnly = this._readOnly = booleanAttribute2Boolean(val);
+          this.formElement.readOnly = this._readOnly = attr2bool(val);
         }
       }, {
         kind: "field",
@@ -758,7 +813,7 @@ var preciseuiwc = (function (exports) {
         kind: "set",
         key: "required",
         value: function required(val) {
-          this.formElement.required = this._required = booleanAttribute2Boolean(val);
+          this.formElement.required = this._required = attr2bool(val);
         }
       }, {
         kind: "field",
@@ -1138,8 +1193,7 @@ textarea {
       }, {
         kind: "get",
         key: "layoutCSS",
-        value:
-        //! API change, was: orientation: 'horizontal' | 'vertical' = 'vertical';
+        value: //! API change, was: orientation: 'horizontal' | 'vertical' = 'vertical';
         function layoutCSS() {
           return (this.layout.match(/[0-9]/gu) || []).map((val, key) => `.card > :nth-child(${key + 1}) {flex:${val} 1 auto;}`).join('\n');
         }
@@ -1147,12 +1201,8 @@ textarea {
         kind: "field",
         decorators: [property({
           reflect: true,
-          attributeToProperty(val) {
-            return val !== null;
-          },
-          propertyToAttribute(val) {
-            return val ? '' : null;
-          }
+          attr2prop: attr2bool,
+          prop2attr: bool2attr
         })],
         key: "disabled",
         value() {
@@ -1160,9 +1210,8 @@ textarea {
         }
       }, {
         kind: "method",
-        key: "renderTemplate",
-        value:
-        function renderTemplate() {
+        key: "updateTemplate",
+        value: function updateTemplate() {
           return `<section class="card">
   <div class="card-header"><slot name=header></slot></div>
   <div class="card-media"><slot name=media></slot></div>
@@ -1172,8 +1221,8 @@ textarea {
         }
       }, {
         kind: "method",
-        key: "renderStyle",
-        value: function renderStyle() {
+        key: "updateStyle",
+        value: function updateStyle() {
           return `
 .card {
   box-sizing: border-box;
@@ -1190,8 +1239,8 @@ ${this.layoutCSS}`;
 
   let Container = _decorate([defineElement(`${customelementprefix}-container`)], function (_initialize, _BaseElement) {
     class Container extends _BaseElement {
-      constructor() {
-        super();
+      constructor(...args) {
+        super(...args);
         _initialize(this);
       }
     }
@@ -1200,7 +1249,6 @@ ${this.layoutCSS}`;
       d: [{
         kind: "field",
         decorators: [property({
-          observe: true,
           reflect: true
         })],
         key: "align",
@@ -1210,29 +1258,28 @@ ${this.layoutCSS}`;
       }, {
         kind: "field",
         decorators: [property({
-          observe: true,
           reflect: true
         })],
         key: "maxWidth",
         value() {
-          return undefined;
+          return null;
         }
       }, {
         kind: "method",
-        key: "renderTemplate",
-        value: function renderTemplate() {
+        key: "updateTemplate",
+        value: function updateTemplate() {
           return `<div class=container>
   <slot></slot>
 </div>`;
         }
       }, {
         kind: "method",
-        key: "renderStyle",
-        value: function renderStyle() {
+        key: "updateStyle",
+        value: function updateStyle() {
           return `.container {
   display: flex;
   justify-content: ${this.align === 'center' ? 'center' : `flex-${this.align === 'left' ? 'left' : 'right'}`};
-  ${this.maxWidth ? `max-width: ${this.maxWidth}` : ''}
+  ${this.maxWidth === null ? `max-width: ${this.maxWidth}` : ''}
 }`;
         }
       }]
@@ -1241,8 +1288,8 @@ ${this.layoutCSS}`;
 
   let ContentSwitch = _decorate([defineElement(`${customelementprefix}-content-switch`)], function (_initialize, _BaseElement) {
     class ContentSwitch extends _BaseElement {
-      constructor() {
-        super();
+      constructor(...args) {
+        super(...args);
         _initialize(this);
       }
     }
@@ -1251,12 +1298,11 @@ ${this.layoutCSS}`;
       d: [{
         kind: "field",
         decorators: [property({
-          observe: true,
           reflect: true,
-          attributeToProperty(val) {
+          attr2prop(val) {
             return Number(val);
           },
-          propertyToAttribute(val) {
+          prop2attr(val) {
             return String(val);
           }
         })],
@@ -1267,12 +1313,11 @@ ${this.layoutCSS}`;
       }, {
         kind: "field",
         decorators: [property({
-          observe: true,
           reflect: true,
-          attributeToProperty(val) {
+          attr2prop(val) {
             return Number(val);
           },
-          propertyToAttribute(val) {
+          prop2attr(val) {
             return String(val);
           }
         })],
@@ -1291,16 +1336,16 @@ ${this.layoutCSS}`;
         }
       }, {
         kind: "method",
-        key: "renderTemplate",
-        value: function renderTemplate() {
+        key: "updateTemplate",
+        value: function updateTemplate() {
           return `<div class=content-switch>
   <slot></slot>
 </div>`;
         }
       }, {
         kind: "method",
-        key: "renderStyle",
-        value: function renderStyle() {
+        key: "updateStyle",
+        value: function updateStyle() {
           return ``;
         }
       }]
