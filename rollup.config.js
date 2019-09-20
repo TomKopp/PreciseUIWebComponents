@@ -7,6 +7,7 @@ import json from 'rollup-plugin-json';
 import pkg from './package.json';
 import progress from 'rollup-plugin-progress';
 import resolve from 'rollup-plugin-node-resolve';
+import { terser } from 'rollup-plugin-terser';
 
 const extensions = [ '.js', '.jsx', '.ts', '.tsx' ];
 
@@ -41,6 +42,9 @@ export default {
 
     // Compile TypeScript/JavaScript files
     babel({ extensions }),
+
+    // Minify generated es bundle. Uses terser under the hood.
+		(() => { if (process.env.NODE_ENV === 'production') return terser(); })(),
 
     // Rollup plugin to easily copy files and folders
     cpy({ files: ['dist/index.esm.js', 'dist/index.esm.js.map'], dest: 'public/' })

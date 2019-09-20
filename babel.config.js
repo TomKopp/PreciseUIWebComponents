@@ -12,9 +12,6 @@ module.exports = function (api) {
     , '@babel/plugin-proposal-object-rest-spread'
   ];
 
-
-  if (api.env('production')) { presets.push('minify'); }
-
   return {
     presets
     , plugins
