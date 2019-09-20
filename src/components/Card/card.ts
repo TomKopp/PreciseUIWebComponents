@@ -16,13 +16,6 @@ export class Card extends BaseElement {
       .join('\n');
   }
 
-  @property({
-    reflect: true
-    , attr2prop: attr2bool
-    , prop2attr: bool2attr
-  })
-  disabled: boolean = false;
-
 
 
   updateTemplate() {
