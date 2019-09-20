@@ -36,11 +36,11 @@ export default {
     // Convert JSON files to ES Modules
     json({ include: './package.json', preferConst: true, compact: true }),
 
-    // Compile TypeScript/JavaScript files
-    babel({ extensions, include: ['src/**/*'], exclude: 'node_modules/**' }),
-
     // Remove comments, trim trailing spaces, compact empty lines, and normalize line endings
-    cleanup({extensions: ['ts', 'js']}),
+    cleanup({ extensions: extensions.map(v => v.slice(1)) }),
+
+    // Compile TypeScript/JavaScript files
+    babel({ extensions }),
 
     // Rollup plugin to easily copy files and folders
     cpy({ files: ['dist/index.esm.js', 'dist/index.esm.js.map'], dest: 'public/' })
