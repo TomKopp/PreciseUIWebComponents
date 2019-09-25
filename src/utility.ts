@@ -47,14 +47,12 @@ export const debounce = (func: Function, wait: number, immediate = false) => {
   }
 
   let timeout: number | null;
-  //@ts-ignore
-  return function debounced(...args) {
+
+  return function debounced(...args: any[]) {
     const later = () => {
       timeout = null;
-      if (!immediate) {
-        //@ts-ignore
-        func.apply(this, args);
-      }
+      //@ts-ignore
+      if (!immediate) { func.apply(this, args); }
     };
 
     const callNow = immediate && !timeout;
@@ -63,14 +61,31 @@ export const debounce = (func: Function, wait: number, immediate = false) => {
     //@ts-ignore
     timeout = setTimeout(later, wait);
 
-    if (callNow) {
-      //@ts-ignore
-      func.apply(this, args);
-    }
+    //@ts-ignore
+    if (callNow) { func.apply(this, args); }
   };
 };
 
+export const rAFthrottle = (func: Function, immediate = false) => {
+	if (typeof func !== 'function') {
+		throw new TypeError('Expected a function');
+	}
 
+	let rAFid: number | null;
+
+	return function throttled(...args: any[]) {
+		const later = () => {
+			rAFid = null;
+      //@ts-ignore
+			if (!immediate) { func.apply(this, args); }
+		};
+		const callNow = immediate && !rAFid;
+
+		if (!rAFid) { rAFid = requestAnimationFrame(later); }
+    //@ts-ignore
+		if (callNow) { func.apply(this, args); }
+	};
+};
 
 /**
  * PropertyDeclaration
