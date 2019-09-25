@@ -1,4 +1,4 @@
-import { PropertyDeclaration, defaultPropertyDeclaration, identity, isDifferent } from '../../utility';
+import { PropertyDeclaration, defaultPropertyDeclaration, identity, isDifferent, rAFthrottle } from '../../utility';
 
 export * from './../../decorators';
 export * from '../../utility';
@@ -108,10 +108,10 @@ export class BaseElement extends HTMLElement {
 	 * Flag to indicate a scheduled requestAnimationFrame
 	 *
 	 * @protected
-	 * @type {boolean}
+	 * @type {Function}
 	 * @memberof BaseElement
 	 */
-  _rAFScheduled: boolean = false;
+  _rAFScheduled = rAFthrottle(this.render.bind(this));
 
 	/**
 	 * Template element
@@ -285,14 +285,7 @@ export class BaseElement extends HTMLElement {
 
   requestRender(dirtyTemplate: boolean, dirtyStyle: boolean, dirtyAttribute: boolean) {
     this.preRenderHook();
-
-    if (!this._rAFScheduled) {
-      this._rAFScheduled = true;
-      requestAnimationFrame(() => {
-        this.render(dirtyTemplate, dirtyStyle, dirtyAttribute);
-        this._rAFScheduled = false;
-      });
-    }
+    this._rAFScheduled(dirtyTemplate, dirtyStyle, dirtyAttribute);
   }
 
 	/**
