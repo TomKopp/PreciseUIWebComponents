@@ -7,7 +7,7 @@ export declare class BaseElement extends HTMLElement {
     static readonly classProperties: Map<PropertyKey, PropertyDeclaration>;
     static addClassProperty(propertyKey: string, propertyDeclaration?: PropertyDeclaration): void;
     _renderRoot: (HTMLElement | ShadowRoot);
-    _rAFScheduled: boolean;
+    _rAFscheduled: (...args: any[]) => void;
     _template: HTMLTemplateElement | undefined;
     readonly template: HTMLTemplateElement;
     _styleElement: HTMLStyleElement | undefined;
