@@ -186,7 +186,7 @@ export class BaseElement extends HTMLElement {
 	 */
   reflectAttributes() {
     const reflector = (propertyDeclaration: PropertyDeclaration, propertyKey: PropertyKey) => {
-      if (!propertyDeclaration.reflect && typeof propertyKey !== 'string') { return; }
+      if (!propertyDeclaration.reflect || typeof propertyKey !== 'string') { return; }
 
       const { prop2attr = identity } = propertyDeclaration;
       const prop = prop2attr.call(this, this[propertyKey as keyof BaseElement]);
@@ -233,6 +233,10 @@ export class BaseElement extends HTMLElement {
 	 */
   connectedCallback() {
     if (!this.isConnected) { return; }
+
+    // First render
+    this.styleElement.innerHTML = this.updateStyle();
+    this.template.innerHTML = this.updateTemplate();
     this.requestRender(true, true, true);
   }
 
